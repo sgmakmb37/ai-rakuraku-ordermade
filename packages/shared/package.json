@@ -1,0 +1,14 @@
+{
+  "name": "@rakuraku/shared",
+  "version": "1.0.0",
+  "description": "Shared constants, types, and utilities for Rakuraku",
+  "main": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./constants": "./constants.ts",
+    "./types": "./types.ts"
+  },
+  "keywords": ["rakuraku", "shared"],
+  "author": "",
+  "license": "MIT"
+}

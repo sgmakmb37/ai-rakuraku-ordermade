@@ -1,0 +1,28 @@
+# ECC: 個人の学習データ・ローカル設定（公開リポジトリに含めない）
+ecc-instinct-snapshot.txt
+.claude/settings.local.json
+.claude/bash-commands.log
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build
+.next/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
