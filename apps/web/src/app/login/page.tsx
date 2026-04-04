@@ -8,6 +8,7 @@ type AuthView = "login" | "signup" | "verify" | "forgot";
 
 export default function LoginPage() {
   const router = useRouter();
+  const supabase = createClient();
   const [view, setView] = useState<AuthView>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,14 +18,12 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const codeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // ログインフォーム送信
   const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -38,13 +37,11 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError("ログインに失敗しました。もう一度お試しください。");
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // サインアップフォーム送信
   const handleSignupSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -62,7 +59,6 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -77,13 +73,11 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError("サインアップに失敗しました。もう一度お試しください。");
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 確認コード入力の処理
   const handleCodeChange = (index: number, value: string) => {
     if (value.length > 1) return;
     if (!/^\d*$/.test(value)) return;
@@ -98,7 +92,6 @@ export default function LoginPage() {
     }
   };
 
-  // バックスペース処理
   const handleCodeKeyDown = (
     index: number,
     e: React.KeyboardEvent<HTMLInputElement>
@@ -108,7 +101,6 @@ export default function LoginPage() {
     }
   };
 
-  // 確認コード送信
   const handleVerifySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -122,7 +114,6 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
       const { error: verifyError } = await supabase.auth.verifyOtp({
         email,
         token,
@@ -137,22 +128,19 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError("コード検証に失敗しました。もう一度お試しください。");
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // コード再送信
   const handleResendCode = async () => {
     setError("");
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      const { error: resendError } = await supabase.auth.signUp({
+      const { error: resendError } = await supabase.auth.resend({
         email,
-        password,
+        type: "signup",
       });
 
       if (resendError) {
@@ -163,20 +151,17 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError("コード再送に失敗しました。もう一度お試しください。");
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // パスワードリセット送信
   const handleForgotSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
       const { error: resetError } =
         await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
@@ -190,13 +175,11 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError("リセットメール送信に失敗しました。もう一度お試しください。");
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // フォーカス自動設定
   useEffect(() => {
     if (view === "verify") {
       codeInputRefs.current[0]?.focus();
