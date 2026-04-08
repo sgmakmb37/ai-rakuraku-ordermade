@@ -1,6 +1,6 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-supabase==2.4.1
+supabase>=2.10.0
 redis==5.0.1
 stripe==7.4.0
 python-multipart==0.0.6
