@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 type Step = 1 | 2 | 3 | 4;
 
 interface FormData {
-  modelType: "light" | "standard";
+  modelType: "qwen2.5-1.5b" | "qwen2.5-3b";
   genre: string;
   purpose: string;
   urls: string[];
@@ -32,7 +32,7 @@ export default function NewProjectPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [formData, setFormData] = useState<FormData>({
-    modelType: "standard",
+    modelType: "qwen2.5-3b",
     genre: "",
     purpose: "",
     urls: [],
@@ -44,7 +44,7 @@ export default function NewProjectPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData({ ...formData, modelType: e.target.value as "light" | "standard" });
+    setFormData({ ...formData, modelType: e.target.value as "qwen2.5-1.5b" | "qwen2.5-3b" });
   };
 
   const handleGenreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -187,7 +187,7 @@ export default function NewProjectPage() {
 
   const sourceCount = formData.urls.length + formData.files.length;
   const modelLabel =
-    formData.modelType === "light"
+    formData.modelType === "qwen2.5-1.5b"
       ? "高速（軽量）- Qwen2.5 1.5B"
       : "標準（高品質）- Qwen2.5 3B";
 
@@ -253,11 +253,11 @@ export default function NewProjectPage() {
                   onChange={handleModelChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  <option value="light">高速（軽量）- Qwen2.5 1.5B</option>
-                  <option value="standard">標準（高品質）- Qwen2.5 3B</option>
+                  <option value="qwen2.5-1.5b">高速（軽量）- Qwen2.5 1.5B</option>
+                  <option value="qwen2.5-3b">標準（高品質）- Qwen2.5 3B</option>
                 </select>
                 <p className="text-sm text-gray-600 mt-3">
-                  {formData.modelType === "light"
+                  {formData.modelType === "qwen2.5-1.5b"
                     ? "軽量モデルは高速に学習できますが、精度は標準モデルより低い場合があります。"
                     : "標準モデルは高品質な学習が期待できます。学習時間が少し長くなります。"}
                 </p>
