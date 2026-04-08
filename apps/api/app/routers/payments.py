@@ -1,16 +1,19 @@
-import stripe
 import json
-import uuid
 import logging
-from datetime import datetime
+import uuid
+from datetime import datetime, timezone
+
+import redis
+import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
 from supabase import Client
-import redis
 
 from app.config import settings
-from app.deps import get_supabase, get_current_user
+from app.deps import get_supabase, get_current_user, get_redis
 
 logger = logging.getLogger(__name__)
+
+PRICE_JPY = 770
 
 stripe.api_key = settings.stripe_secret_key
 
@@ -28,28 +31,32 @@ async def create_checkout(
     if not project.data or project.data["user_id"] != user["id"]:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Stripe Checkout Session作成（770円税込、mode="payment"）
-    session = stripe.checkout.Session.create(
-        line_items=[
-            {
-                "price_data": {
-                    "currency": "jpy",
-                    "product_data": {
-                        "name": "AI学習 1回",
+    # Stripe Checkout Session作成（770円税込）
+    try:
+        session = stripe.checkout.Session.create(
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": "jpy",
+                        "product_data": {
+                            "name": "AI学習 1回",
+                        },
+                        "unit_amount": PRICE_JPY,
                     },
-                    "unit_amount": 770,
-                },
-                "quantity": 1,
-            }
-        ],
-        mode="payment",
-        success_url=f"{settings.frontend_url}/projects/{project_id}/success",
-        cancel_url=f"{settings.frontend_url}/projects/{project_id}/cancel",
-        metadata={
-            "project_id": project_id,
-            "user_id": user["id"],
-        },
-    )
+                    "quantity": 1,
+                }
+            ],
+            mode="payment",
+            success_url=f"{settings.frontend_url}/dashboard/{project_id}?payment=success",
+            cancel_url=f"{settings.frontend_url}/dashboard/{project_id}?payment=cancel",
+            metadata={
+                "project_id": project_id,
+                "user_id": user["id"],
+            },
+        )
+    except stripe.error.StripeError:
+        logger.exception("Stripe checkout session creation failed")
+        raise HTTPException(status_code=502, detail="Payment service error")
 
     # paymentsテーブルにpending状態で作成
     payment_id = str(uuid.uuid4())
@@ -58,9 +65,9 @@ async def create_checkout(
         "project_id": project_id,
         "user_id": user["id"],
         "stripe_payment_id": session.id,
-        "amount": 770,
+        "amount": PRICE_JPY,
         "status": "pending",
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }).execute()
 
     return {"checkout_url": session.url}
@@ -76,10 +83,10 @@ async def stripe_webhook(request: Request, supabase: Client = Depends(get_supaba
         event = stripe.Webhook.construct_event(
             payload, sig_header, settings.stripe_webhook_secret
         )
-    except ValueError as e:
+    except ValueError:
         logger.error("Invalid webhook payload")
         raise HTTPException(status_code=400, detail="Invalid payload")
-    except stripe.error.SignatureVerificationError as e:
+    except stripe.error.SignatureVerificationError:
         logger.error("Invalid webhook signature")
         raise HTTPException(status_code=400, detail="Invalid signature")
 
@@ -87,6 +94,12 @@ async def stripe_webhook(request: Request, supabase: Client = Depends(get_supaba
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
         stripe_payment_id = session["id"]
+
+        # 金額検証
+        amount_total = session.get("amount_total")
+        if amount_total != PRICE_JPY:
+            logger.error("Amount mismatch: expected %d, got %s", PRICE_JPY, amount_total)
+            raise HTTPException(status_code=400, detail="Amount mismatch")
 
         # paymentsテーブルから該当レコード取得
         payments = supabase.table("payments").select("*").eq("stripe_payment_id", stripe_payment_id).execute()
@@ -100,7 +113,6 @@ async def stripe_webhook(request: Request, supabase: Client = Depends(get_supaba
             return {"status": "ok"}
 
         project_id = payment["project_id"]
-        user_id = payment["user_id"]
 
         # training_job作成
         job_id = str(uuid.uuid4())
@@ -108,13 +120,20 @@ async def stripe_webhook(request: Request, supabase: Client = Depends(get_supaba
             "id": job_id,
             "project_id": project_id,
             "status": "queued",
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }).execute()
 
         # Redisキュー投入
-        redis_client = redis.from_url(settings.redis_url)
-        queue_data = json.dumps({"job_id": job_id, "project_id": project_id})
-        redis_client.rpush("training_jobs", queue_data)
+        try:
+            redis_client = get_redis()
+            queue_data = json.dumps({"job_id": job_id, "project_id": project_id})
+            redis_client.rpush("training_jobs", queue_data)
+        except redis.RedisError:
+            logger.exception("Failed to enqueue training job %s", job_id)
+            supabase.table("training_jobs").update(
+                {"status": "failed", "error_message": "Queue error"}
+            ).eq("id", job_id).execute()
+            raise HTTPException(status_code=502, detail="Queue service error")
 
         # paymentsステータス更新（ジョブ作成後）
         supabase.table("payments").update({

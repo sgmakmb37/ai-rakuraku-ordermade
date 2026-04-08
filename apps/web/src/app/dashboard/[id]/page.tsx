@@ -91,12 +91,17 @@ export default function ProjectDetailPage() {
     try {
       setIsActionLoading(true);
       const response = await api.createCheckout(projectId);
-      // Stripe Checkout URLへリダイレクト
+      // Stripe URLを検証してから遷移
       if (response.checkout_url) {
-        window.location.href = response.checkout_url;
+        const checkoutUrl = new URL(response.checkout_url);
+        if (checkoutUrl.hostname.endsWith("stripe.com")) {
+          window.location.href = response.checkout_url;
+        } else {
+          throw new Error("Invalid checkout URL");
+        }
       }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "追加学習の開始に失敗しました");
+    } catch {
+      alert("追加学習の開始に失敗しました。もう一度お試しください。");
     } finally {
       setIsActionLoading(false);
     }

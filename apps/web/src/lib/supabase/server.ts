@@ -29,7 +29,7 @@ export async function createServerRouteClient() {
             cookiesToSet.forEach(({ name, value, options }) => {
               cookieStore.set(name, value, options);
             });
-          } catch (error) {
+          } catch {
             // Ignore set cookie errors that occur in read-only contexts
           }
         }

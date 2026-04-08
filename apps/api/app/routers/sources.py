@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Depends
 from supabase import Client
 
 from app.deps import get_current_user, get_supabase
 from app.schemas import AddSourceRequest, SourceResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/projects", tags=["sources"])
 
@@ -58,8 +62,9 @@ async def add_source(
         return response.data[0]
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=404, detail="Project not found")
+    except Exception:
+        logger.exception("Failed to add source")
+        raise HTTPException(status_code=500, detail="Internal error")
 
 
 @router.delete("/{id}/sources/{sid}")
@@ -70,16 +75,10 @@ async def delete_source(
     supabase: Client = Depends(get_supabase),
 ) -> dict:
     try:
-        project = (
-            supabase.table("projects")
-            .select("id")
-            .eq("id", id)
-            .eq("user_id", current_user["id"])
-            .single()
-            .execute()
-        )
-
+        # プロジェクト所有権確認
+        supabase.table("projects").select("id").eq("id", id).eq("user_id", current_user["id"]).single().execute()
+        # project_idも条件に含めて削除
         supabase.table("data_sources").delete().eq("id", sid).eq("project_id", id).execute()
         return {"deleted": True}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=404, detail="Source not found")

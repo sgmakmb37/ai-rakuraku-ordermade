@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Depends
 from supabase import Client
 
 from app.deps import get_current_user, get_supabase
 from app.schemas import CreateProjectRequest, ProjectResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -20,8 +24,9 @@ async def list_projects(
             .execute()
         )
         return response.data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("Failed to list projects")
+        raise HTTPException(status_code=500, detail="Internal error")
 
 
 @router.post("", response_model=ProjectResponse)
@@ -54,8 +59,9 @@ async def create_project(
         return response.data[0]
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("Failed to create project")
+        raise HTTPException(status_code=500, detail="Internal error")
 
 
 @router.get("/{id}", response_model=ProjectResponse)
@@ -74,7 +80,7 @@ async def get_project(
             .execute()
         )
         return response.data
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=404, detail="Project not found")
 
 
@@ -85,15 +91,7 @@ async def delete_project(
     supabase: Client = Depends(get_supabase),
 ) -> dict:
     try:
-        response = (
-            supabase.table("projects")
-            .select("id")
-            .eq("id", id)
-            .eq("user_id", current_user["id"])
-            .single()
-            .execute()
-        )
-        supabase.table("projects").delete().eq("id", id).execute()
+        supabase.table("projects").delete().eq("id", id).eq("user_id", current_user["id"]).execute()
         return {"deleted": True}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=404, detail="Project not found")

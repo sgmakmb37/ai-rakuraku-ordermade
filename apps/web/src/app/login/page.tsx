@@ -35,7 +35,7 @@ export default function LoginPage() {
         router.refresh();
         router.push("/dashboard");
       }
-    } catch (err) {
+    } catch {
       setError("ログインに失敗しました。もう一度お試しください。");
     } finally {
       setIsLoading(false);
@@ -71,7 +71,7 @@ export default function LoginPage() {
         setPassword("");
         setPasswordConfirm("");
       }
-    } catch (err) {
+    } catch {
       setError("サインアップに失敗しました。もう一度お試しください。");
     } finally {
       setIsLoading(false);
@@ -126,7 +126,7 @@ export default function LoginPage() {
         router.refresh();
         router.push("/dashboard");
       }
-    } catch (err) {
+    } catch {
       setError("コード検証に失敗しました。もう一度お試しください。");
     } finally {
       setIsLoading(false);
@@ -149,7 +149,7 @@ export default function LoginPage() {
         setCode(Array(6).fill(""));
         codeInputRefs.current[0]?.focus();
       }
-    } catch (err) {
+    } catch {
       setError("コード再送に失敗しました。もう一度お試しください。");
     } finally {
       setIsLoading(false);
@@ -173,7 +173,7 @@ export default function LoginPage() {
         setView("login");
         setEmail("");
       }
-    } catch (err) {
+    } catch {
       setError("リセットメール送信に失敗しました。もう一度お試しください。");
     } finally {
       setIsLoading(false);

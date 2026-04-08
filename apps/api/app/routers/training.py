@@ -1,12 +1,16 @@
+import json
+import logging
+import uuid
+from datetime import datetime, timedelta, timezone
+
+import redis
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
-import redis
-import json
-from datetime import datetime, timedelta
-import uuid
 
-from app.deps import get_supabase, get_current_user
 from app.config import settings
+from app.deps import get_supabase, get_current_user, get_redis
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/projects/{project_id}", tags=["training"])
 
@@ -31,13 +35,20 @@ async def start_training(
         "id": job_id,
         "project_id": project_id,
         "status": "queued",
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }).execute()
 
     # Redisキューにジョブ投入
-    redis_client = redis.from_url(settings.redis_url)
-    queue_data = json.dumps({"job_id": job_id, "project_id": project_id})
-    redis_client.rpush("training_jobs", queue_data)
+    try:
+        redis_client = get_redis()
+        queue_data = json.dumps({"job_id": job_id, "project_id": project_id})
+        redis_client.rpush("training_jobs", queue_data)
+    except redis.RedisError:
+        logger.exception("Failed to enqueue training job %s", job_id)
+        supabase.table("training_jobs").update(
+            {"status": "failed", "error_message": "Queue error"}
+        ).eq("id", job_id).execute()
+        raise HTTPException(status_code=502, detail="Queue service error")
 
     return {"job_id": job_id, "status": "queued"}
 
@@ -57,7 +68,7 @@ async def reset_project(
     supabase.table("lora_artifacts").delete().eq("project_id", project_id).execute()
 
     # ステータスをcreatedに戻す
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     expires_at = now + timedelta(days=30)
     supabase.table("projects").update({
         "status": "created",
@@ -93,7 +104,7 @@ async def download_model(
     )
 
     # last_action_atとexpires_at更新
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     expires_at = now + timedelta(days=30)
     supabase.table("projects").update({
         "last_action_at": now.isoformat(),

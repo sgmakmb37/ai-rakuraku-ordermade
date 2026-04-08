@@ -74,9 +74,15 @@ export default function NewProjectPage() {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     const validFiles = files.filter((file) => {
       const ext = file.name.split(".").pop()?.toLowerCase();
-      return ["txt", "pdf", "csv", "json"].includes(ext || "");
+      if (!["txt", "pdf", "csv", "json"].includes(ext || "")) return false;
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`${file.name} は5MBを超えています`);
+        return false;
+      }
+      return true;
     });
 
     if (formData.files.length + validFiles.length <= 5) {
@@ -166,12 +172,15 @@ export default function NewProjectPage() {
       // チェックアウトURLを取得
       const checkout = await api.createCheckout(project.id);
 
-      // Stripeに遷移
-      window.location.href = checkout.checkout_url;
-    } catch (error) {
-      alert(
-        `エラーが発生しました: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
+      // Stripe URLを検証してから遷移
+      const checkoutUrl = new URL(checkout.checkout_url);
+      if (checkoutUrl.hostname.endsWith("stripe.com")) {
+        window.location.href = checkout.checkout_url;
+      } else {
+        throw new Error("Invalid checkout URL");
+      }
+    } catch {
+      alert("エラーが発生しました。もう一度お試しください。");
       setIsLoading(false);
     }
   };
