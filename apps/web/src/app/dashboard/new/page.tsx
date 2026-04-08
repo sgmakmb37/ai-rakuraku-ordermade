@@ -457,7 +457,7 @@ export default function NewProjectPage() {
                     処理中...
                   </>
                 ) : (
-                  "学習を開始する（700円）"
+                  "学習を開始する（770円・税込）"
                 )}
               </button>
             </div>

@@ -28,7 +28,7 @@ async def create_checkout(
     if not project.data or project.data["user_id"] != user["id"]:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Stripe Checkout Session作成（700円、mode="payment"）
+    # Stripe Checkout Session作成（770円税込、mode="payment"）
     session = stripe.checkout.Session.create(
         line_items=[
             {
@@ -37,7 +37,7 @@ async def create_checkout(
                     "product_data": {
                         "name": "AI学習 1回",
                     },
-                    "unit_amount": 700,
+                    "unit_amount": 770,
                 },
                 "quantity": 1,
             }
@@ -58,7 +58,7 @@ async def create_checkout(
         "project_id": project_id,
         "user_id": user["id"],
         "stripe_payment_id": session.id,
-        "amount": 700,
+        "amount": 770,
         "status": "pending",
         "created_at": datetime.utcnow().isoformat(),
     }).execute()

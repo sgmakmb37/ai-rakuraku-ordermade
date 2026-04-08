@@ -48,7 +48,7 @@ async def create_project(
             "model_type": request.model_type,
             "genre": request.genre,
             "description": request.description,
-            "status": "draft",
+            "status": "created",
         }
         response = supabase.table("projects").insert(project_data).execute()
         return response.data[0]
