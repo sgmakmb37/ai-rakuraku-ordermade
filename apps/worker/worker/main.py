@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict
@@ -17,6 +18,8 @@ from worker.pipeline import (
 )
 
 logger = logging.getLogger(__name__)
+
+RUNPOD_MODE = os.getenv("RUNPOD_MODE", "0") == "1"
 
 # Model ID mapping
 MODEL_ID_MAP = {
@@ -288,6 +291,40 @@ def run_worker_loop(max_jobs: int = None) -> None:
         raise
 
 
+def handler(job: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    RunPod Serverless handler.
+
+    Args:
+        job: RunPod job dict with "input" key containing job data
+
+    Returns:
+        Result data
+    """
+    job_input = job["input"]
+    job_id = job_input.get("job_id") or job_input.get("id")
+    project_id = job_input["project_id"]
+
+    queue = WorkerQueue()
+    process_input = {"id": job_id, "project_id": project_id}
+
+    try:
+        result = process_job(process_input)
+        queue.mark_job_complete(job_id, result)
+        return result
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"RunPod job {job_id} failed: {error_message}", exc_info=True)
+        queue.mark_job_failed(job_id, error_message)
+        return {"error": error_message}
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    run_worker_loop()
+
+    if RUNPOD_MODE:
+        import runpod
+
+        runpod.serverless.start({"handler": handler})
+    else:
+        run_worker_loop()

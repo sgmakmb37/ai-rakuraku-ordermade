@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     stripe_secret_key: str
     stripe_webhook_secret: str
     frontend_url: str
+    runpod_endpoint_id: str = ""
+    runpod_api_key: str = ""
 
     class Config:
         env_file = ".env"
