@@ -23,6 +23,10 @@ class ProjectResponse(BaseModel):
     expires_at: datetime
 
 
+class CheckoutRequest(BaseModel):
+    project_id: str
+
+
 class AddSourceRequest(BaseModel):
     type: Literal["url", "file"]
     name: str

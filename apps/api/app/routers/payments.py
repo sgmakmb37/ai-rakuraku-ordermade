@@ -10,6 +10,7 @@ from supabase import Client
 
 from app.config import settings
 from app.deps import get_supabase, get_current_user, get_redis
+from app.schemas import CheckoutRequest
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +23,12 @@ router = APIRouter(prefix="/payments", tags=["payments"])
 
 @router.post("/checkout")
 async def create_checkout(
-    project_id: str,
+    request: CheckoutRequest,
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase),
 ):
+    project_id = request.project_id
+
     # プロジェクト存在確認
     project = supabase.table("projects").select("*").eq("id", project_id).single().execute()
     if not project.data or project.data["user_id"] != user["id"]:
