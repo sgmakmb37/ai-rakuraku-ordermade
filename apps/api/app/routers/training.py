@@ -127,8 +127,8 @@ async def download_model(
     artifact = artifacts.data[0]
 
     # Supabase Storageからsigned URLを生成して返す
-    signed_url = supabase.storage.from_("lora_models").create_signed_url(
-        artifact["file_path"],
+    signed_url = supabase.storage.from_("models").create_signed_url(
+        artifact["storage_path"],
         3600  # 1時間有効
     )
 

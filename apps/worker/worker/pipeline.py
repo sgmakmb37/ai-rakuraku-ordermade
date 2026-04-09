@@ -197,8 +197,9 @@ def train_lora(
     # Prepare dataset
     dataset = Dataset.from_dict({"text": train_texts})
 
-    # Setup trainer — trl v1 uses max_length (was max_seq_length).
-    # dataset_text_field auto-detected from "text" column.
+    # Setup trainer — trl 0.18.2 needs explicit eos_token matching the tokenizer
+    # (its default '<EOS_TOKEN>' sentinel does not exist in Qwen2/Gemma vocab).
+    eos_token = tokenizer.eos_token or getattr(tokenizer, "pad_token", None)
     sft_config = SFTConfig(
         output_dir=output_dir,
         max_steps=max_steps,
@@ -215,6 +216,8 @@ def train_lora(
         save_steps=max_steps,
         max_length=2048,
         packing=False,
+        eos_token=eos_token,
+        dataset_text_field="text",
     )
     trainer = SFTTrainer(
         model=model,

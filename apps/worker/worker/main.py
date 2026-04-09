@@ -170,6 +170,8 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             raise ValueError("No valid chunks after filtering")
 
         # 7. Get existing LoRA artifact if available
+        # TODO: Phase 2 — download previous artifact to local path for resume.
+        # For now, always start fresh to avoid storage-path/local-path mismatch.
         existing_lora_path = None
         lora_artifacts_result = (
             supabase.table("lora_artifacts")
@@ -179,9 +181,6 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             .limit(1)
             .execute()
         )
-        if lora_artifacts_result.data:
-            artifact = lora_artifacts_result.data[0]
-            existing_lora_path = artifact.get("artifact_path")
 
         # 8. Train LoRA
         lora_output_dir = str(Path(config.MODEL_CACHE_DIR) / f"lora_{job_id}")
@@ -201,38 +200,41 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
         logger.info(f"Quantizing model for job {job_id}")
         quantize_model(lora_output_dir, quantized_output_dir)
 
-        # 10. Upload artifacts to Supabase Storage
+        # 10. Upload artifacts to Supabase Storage (bucket: lora_models)
         quantized_model_path = Path(quantized_output_dir)
         if not quantized_model_path.exists():
             raise ValueError(f"Quantized model not found at {quantized_output_dir}")
 
-        # Read quantized model file and upload
         model_files = list(quantized_model_path.glob("*"))
         if not model_files:
             raise ValueError(f"No model files found in {quantized_output_dir}")
 
-        storage_path = f"projects/{project_id}/{job_id}/model"
+        # Prefer the largest .gguf file if multiple, otherwise first file
+        gguf_files = [f for f in model_files if f.is_file() and f.suffix.lower() == ".gguf"]
+        primary_file = max(gguf_files or model_files, key=lambda f: f.stat().st_size)
+
+        storage_dir = f"projects/{project_id}/{job_id}"
+        primary_storage_path = f"{storage_dir}/{primary_file.name}"
+
         for model_file in model_files:
             if model_file.is_file():
                 with open(model_file, "rb") as f:
                     file_bytes = f.read()
-                file_storage_path = f"{storage_path}/{model_file.name}"
+                file_storage_path = f"{storage_dir}/{model_file.name}"
                 supabase.storage.from_("models").upload(
                     file_storage_path, file_bytes
                 )
                 logger.info(f"Uploaded {file_storage_path}")
 
-        # 11. Record LoRA artifact
+        # 11. Record LoRA artifact (schema: project_id, version, storage_path)
         current_version = 1
         if lora_artifacts_result.data:
             current_version = lora_artifacts_result.data[0].get("version", 0) + 1
 
         artifact_record = {
             "project_id": project_id,
-            "job_id": job_id,
             "version": current_version,
-            "artifact_path": storage_path,
-            "model_type": model_type,
+            "storage_path": primary_storage_path,
             "created_at": datetime.utcnow().isoformat(),
         }
         supabase.table("lora_artifacts").insert(artifact_record).execute()
