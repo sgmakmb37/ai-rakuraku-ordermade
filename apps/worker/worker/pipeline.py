@@ -2,10 +2,21 @@ from pathlib import Path
 from typing import Optional
 
 import pymupdf
+import torch
 from datasets import Dataset
+from peft import (
+    LoraConfig,
+    PeftModel,
+    get_peft_model,
+    prepare_model_for_kbit_training,
+)
 from trafilatura import extract, fetch_url
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+)
 from trl import SFTConfig, SFTTrainer
-from unsloth import FastLanguageModel
 
 
 def extract_text(source_type: str, source: str) -> str:
@@ -133,13 +144,14 @@ def train_lora(
     train_texts: list[str],
     output_dir: str,
     existing_lora_path: Optional[str] = None,
-    max_steps: int = 500,
+    max_steps: int = 60,
 ) -> str:
     """
-    Train LoRA adapter using Unsloth.
+    Train LoRA adapter using vanilla transformers + peft + trl (no unsloth).
+    Avoids unsloth's monkey-patching incompatibility with trl >= 0.18.
 
     Args:
-        model_id: Base model identifier
+        model_id: Base model identifier (HuggingFace hub id)
         train_texts: List of training texts
         output_dir: Output directory for adapter
         existing_lora_path: Optional path to existing LoRA for continued training
@@ -148,58 +160,53 @@ def train_lora(
     Returns:
         Path to trained adapter
     """
-    # Load model and tokenizer
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=model_id,
-        max_seq_length=2048,
+    quant_config = BitsAndBytesConfig(
         load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_use_double_quant=True,
     )
 
-    # Setup LoRA
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+    )
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        quantization_config=quant_config,
+        device_map="auto",
+        trust_remote_code=True,
+        torch_dtype=torch.float16,
+    )
+    model = prepare_model_for_kbit_training(model)
+
+    lora_config = LoraConfig(
+        r=16,
+        lora_alpha=16,
+        lora_dropout=0.0,
+        target_modules=[
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ],
+        bias="none",
+        task_type="CAUSAL_LM",
+    )
+    model = get_peft_model(model, lora_config)
+
     if existing_lora_path:
-        # Load existing LoRA weights
-        model = FastLanguageModel.get_peft_model(
-            model,
-            r=16,
-            lora_alpha=16,
-            lora_dropout=0,
-            target_modules=[
-                "q_proj",
-                "k_proj",
-                "v_proj",
-                "o_proj",
-                "gate_proj",
-                "up_proj",
-                "down_proj",
-            ],
-        )
-        # Load checkpoint
-        from peft import PeftModel
-
         model = PeftModel.from_pretrained(model, existing_lora_path)
-    else:
-        model = FastLanguageModel.get_peft_model(
-            model,
-            r=16,
-            lora_alpha=16,
-            lora_dropout=0,
-            target_modules=[
-                "q_proj",
-                "k_proj",
-                "v_proj",
-                "o_proj",
-                "gate_proj",
-                "up_proj",
-                "down_proj",
-            ],
-        )
 
-    # Prepare dataset
     dataset = Dataset.from_dict({"text": train_texts})
 
-    # Setup trainer — trl 0.18.2 needs explicit eos_token matching the tokenizer
-    # (its default '<EOS_TOKEN>' sentinel does not exist in Qwen2/Gemma vocab).
-    eos_token = tokenizer.eos_token or getattr(tokenizer, "pad_token", None)
+    eos_token = tokenizer.eos_token or tokenizer.pad_token
     sft_config = SFTConfig(
         output_dir=output_dir,
         max_steps=max_steps,
@@ -209,7 +216,7 @@ def train_lora(
         learning_rate=2e-4,
         fp16=True,
         logging_steps=5,
-        optim="adamw_8bit",
+        optim="paged_adamw_8bit",
         weight_decay=0.01,
         lr_scheduler_type="linear",
         seed=3407,
@@ -218,6 +225,7 @@ def train_lora(
         packing=False,
         eos_token=eos_token,
         dataset_text_field="text",
+        report_to=[],
     )
     trainer = SFTTrainer(
         model=model,
@@ -226,12 +234,9 @@ def train_lora(
         args=sft_config,
     )
 
-    # Train
     trainer.train()
-
-    # Save model
     model.save_pretrained(output_dir)
-
+    tokenizer.save_pretrained(output_dir)
     return output_dir
 
 
@@ -245,13 +250,9 @@ def quantize_model(model_path: str, output_path: str) -> str:
 
     Returns:
         Path to quantized model
+
+    Note: GGUF quantization requires llama.cpp tooling not present in base
+    image. This function is kept for API compatibility but currently
+    returns the input path unchanged. Worker uploads LoRA adapter directly.
     """
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=model_path,
-        max_seq_length=2048,
-        load_in_4bit=True,
-    )
-
-    model.save_pretrained_gguf(output_path, tokenizer, quantization_method="q4_k_m")
-
-    return output_path
+    return model_path
