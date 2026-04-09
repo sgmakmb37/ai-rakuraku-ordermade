@@ -16,16 +16,31 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/projects/{project_id}", tags=["training"])
 
 
+def _get_user_project(
+    supabase: Client, project_id: str, user_id: str, columns: str = "*",
+) -> dict:
+    """user_idをクエリ条件に含めてプロジェクトを取得する。存在しなければ404。"""
+    try:
+        result = (
+            supabase.table("projects")
+            .select(columns)
+            .eq("id", project_id)
+            .eq("user_id", user_id)
+            .single()
+            .execute()
+        )
+        return result.data
+    except Exception:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+
 @router.post("/train")
 async def start_training(
     project_id: str,
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase),
 ):
-    # プロジェクト存在確認 + user_id一致確認
-    project = supabase.table("projects").select("*").eq("id", project_id).single().execute()
-    if not project.data or project.data["user_id"] != user["id"]:
-        raise HTTPException(status_code=404, detail="Project not found")
+    _get_user_project(supabase, project_id, user["id"])
 
     # ステータスをtrainingに更新
     supabase.table("projects").update({"status": "training"}).eq("id", project_id).execute()
@@ -79,10 +94,7 @@ async def reset_project(
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase),
 ):
-    # プロジェクト存在確認 + user_id一致確認
-    project = supabase.table("projects").select("*").eq("id", project_id).single().execute()
-    if not project.data or project.data["user_id"] != user["id"]:
-        raise HTTPException(status_code=404, detail="Project not found")
+    _get_user_project(supabase, project_id, user["id"])
 
     # lora_artifacts削除
     supabase.table("lora_artifacts").delete().eq("project_id", project_id).execute()
@@ -105,10 +117,7 @@ async def download_model(
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase),
 ):
-    # プロジェクト存在確認 + user_id一致確認
-    project = supabase.table("projects").select("*").eq("id", project_id).single().execute()
-    if not project.data or project.data["user_id"] != user["id"]:
-        raise HTTPException(status_code=404, detail="Project not found")
+    _get_user_project(supabase, project_id, user["id"])
 
     # 最新のlora_artifactを取得
     artifacts = supabase.table("lora_artifacts").select("*").eq("project_id", project_id).order("created_at", desc=True).limit(1).execute()

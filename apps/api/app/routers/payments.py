@@ -29,9 +29,10 @@ async def create_checkout(
 ):
     project_id = request.project_id
 
-    # プロジェクト存在確認
-    project = supabase.table("projects").select("*").eq("id", project_id).single().execute()
-    if not project.data or project.data["user_id"] != user["id"]:
+    # プロジェクト存在確認（user_idをクエリ条件に含めて認可）
+    try:
+        supabase.table("projects").select("id").eq("id", project_id).eq("user_id", user["id"]).single().execute()
+    except Exception:
         raise HTTPException(status_code=404, detail="Project not found")
 
     # Stripe Checkout Session作成（770円税込）
