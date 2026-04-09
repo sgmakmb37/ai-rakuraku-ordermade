@@ -137,12 +137,17 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
 
         # 4. Use pre-extracted content from each source
         all_texts = []
-        for source in data_sources:
+        diag = []
+        logger.info(f"[DIAG] WORKER_IMAGE=f13c7b4 data_sources count={len(data_sources)}")
+        for idx, source in enumerate(data_sources):
+            keys = list(source.keys())
             content = source.get("content", "") or ""
+            content_len = len(content)
+            diag.append(f"src{idx}: keys={keys} content_len={content_len}")
+            logger.info(f"[DIAG] src{idx}: keys={keys} content_len={content_len}")
             if content.strip():
                 all_texts.append(content)
                 continue
-            # Fallback: re-extract if content empty (legacy URL/file rows)
             source_type = source.get("type") or source.get("source_type") or "url"
             source_value = source.get("source_value") or source.get("name") or ""
             if source_value:
@@ -152,8 +157,9 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
                     all_texts.append(text)
 
         combined_text = "\n\n".join(all_texts)
+        logger.info(f"[DIAG] combined_text_len={len(combined_text)}")
         if not combined_text.strip():
-            raise ValueError("No text extracted from sources")
+            raise ValueError(f"No text extracted from sources | diag={diag}")
 
         # 5. Chunk text
         chunks = chunk_text(combined_text)
