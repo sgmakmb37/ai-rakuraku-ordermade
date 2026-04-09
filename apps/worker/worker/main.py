@@ -13,7 +13,6 @@ from worker.pipeline import (
     chunk_text,
     extract_text,
     filter_chunks,
-    quantize_model,
     train_lora,
 )
 
@@ -193,38 +192,51 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             max_steps=60,
         )
 
-        # 9. Quantize model
-        quantized_output_dir = str(
-            Path(config.MODEL_CACHE_DIR) / f"quantized_{job_id}"
+        # 9. Upload LoRA adapter files directly (skip GGUF quantize for E2E).
+        # LoRA adapter files are small (~10-50MB) and usable with base model.
+        lora_path = Path(lora_output_dir)
+        if not lora_path.exists():
+            raise ValueError(f"LoRA adapter not found at {lora_output_dir}")
+
+        adapter_files = [f for f in lora_path.rglob("*") if f.is_file()]
+        if not adapter_files:
+            raise ValueError(f"No adapter files found in {lora_output_dir}")
+
+        # Primary file = adapter_model.safetensors or .bin
+        primary_candidates = [
+            f for f in adapter_files
+            if f.name in ("adapter_model.safetensors", "adapter_model.bin")
+        ]
+        primary_file = primary_candidates[0] if primary_candidates else max(
+            adapter_files, key=lambda f: f.stat().st_size
         )
-        logger.info(f"Quantizing model for job {job_id}")
-        quantize_model(lora_output_dir, quantized_output_dir)
-
-        # 10. Upload artifacts to Supabase Storage (bucket: lora_models)
-        quantized_model_path = Path(quantized_output_dir)
-        if not quantized_model_path.exists():
-            raise ValueError(f"Quantized model not found at {quantized_output_dir}")
-
-        model_files = list(quantized_model_path.glob("*"))
-        if not model_files:
-            raise ValueError(f"No model files found in {quantized_output_dir}")
-
-        # Prefer the largest .gguf file if multiple, otherwise first file
-        gguf_files = [f for f in model_files if f.is_file() and f.suffix.lower() == ".gguf"]
-        primary_file = max(gguf_files or model_files, key=lambda f: f.stat().st_size)
 
         storage_dir = f"projects/{project_id}/{job_id}"
         primary_storage_path = f"{storage_dir}/{primary_file.name}"
 
-        for model_file in model_files:
-            if model_file.is_file():
-                with open(model_file, "rb") as f:
-                    file_bytes = f.read()
-                file_storage_path = f"{storage_dir}/{model_file.name}"
+        for adapter_file in adapter_files:
+            rel = adapter_file.relative_to(lora_path)
+            with open(adapter_file, "rb") as f:
+                file_bytes = f.read()
+            file_storage_path = f"{storage_dir}/{rel.as_posix()}"
+            try:
                 supabase.storage.from_("models").upload(
                     file_storage_path, file_bytes
                 )
-                logger.info(f"Uploaded {file_storage_path}")
+                logger.info(f"Uploaded {file_storage_path} ({len(file_bytes)} bytes)")
+            except Exception as upload_err:
+                logger.warning(f"Upload failed for {file_storage_path}: {upload_err}")
+                # Retry by removing first — supabase upload fails on existing
+                try:
+                    supabase.storage.from_("models").remove([file_storage_path])
+                    supabase.storage.from_("models").upload(
+                        file_storage_path, file_bytes
+                    )
+                    logger.info(f"Re-uploaded {file_storage_path}")
+                except Exception as retry_err:
+                    raise ValueError(
+                        f"Upload to {file_storage_path} failed: {retry_err}"
+                    ) from retry_err
 
         # 11. Record LoRA artifact (schema: project_id, version, storage_path)
         current_version = 1
