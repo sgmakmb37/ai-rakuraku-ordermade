@@ -1,10 +1,13 @@
-FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
+FROM runpod/pytorch:1.0.3-cu1281-torch260-ubuntu2204
 
 WORKDIR /app
+
+ENV RUNPOD_MODE=1
+ENV PYTHONUNBUFFERED=1
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "-m", "worker.main"]
+CMD ["python", "-u", "-m", "worker.main"]
