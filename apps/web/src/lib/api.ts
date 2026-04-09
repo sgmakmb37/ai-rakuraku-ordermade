@@ -43,6 +43,7 @@ export const api = {
   resetProject: (projectId: string) =>
     fetchAPI(`/projects/${projectId}/reset`, { method: "POST" }),
   downloadModel: (projectId: string) => fetchAPI(`/projects/${projectId}/download`),
+  getTrainingHistory: (projectId: string) => fetchAPI(`/projects/${projectId}/history`),
 
   // Payments
   createCheckout: (projectId: string) =>

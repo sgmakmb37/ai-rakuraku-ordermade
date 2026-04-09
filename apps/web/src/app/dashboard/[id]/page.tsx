@@ -75,8 +75,19 @@ export default function ProjectDetailPage() {
           created_at: data.created_at,
           days_until_deletion: data.days_until_deletion,
         });
-        // TODO: APIからhistoryを取得するエンドポイントが必要
-        setHistory([]);
+        // 学習履歴を取得
+        try {
+          const historyData = await api.getTrainingHistory(projectId);
+          setHistory(
+            (historyData.jobs || []).map((j: { id: string; status: string; created_at: string }) => ({
+              id: j.id,
+              status: j.status,
+              created_at: j.created_at,
+            }))
+          );
+        } catch {
+          setHistory([]);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "プロジェクトの取得に失敗しました");
       } finally {

@@ -141,3 +141,23 @@ async def download_model(
     }).eq("id", project_id).execute()
 
     return {"download_url": signed_url}
+
+
+@router.get("/history")
+async def get_training_history(
+    project_id: str,
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase),
+):
+    """プロジェクトの学習履歴を取得する。"""
+    _get_user_project(supabase, project_id, user["id"])
+
+    jobs = (
+        supabase.table("training_jobs")
+        .select("*")
+        .eq("project_id", project_id)
+        .order("created_at", desc=True)
+        .limit(20)
+        .execute()
+    )
+    return {"jobs": jobs.data}
