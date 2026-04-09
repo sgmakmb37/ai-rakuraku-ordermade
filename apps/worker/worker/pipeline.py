@@ -197,39 +197,33 @@ def train_lora(
     # Prepare dataset
     dataset = Dataset.from_dict({"text": train_texts})
 
-    # Setup trainer — handle both old/new trl APIs
-    base_args = dict(
+    # Setup trainer — unsloth official pattern:
+    # max_seq_length inside SFTConfig, dataset_text_field on SFTTrainer kwarg,
+    # tokenizer explicitly passed to SFTTrainer.
+    sft_config = SFTConfig(
         output_dir=output_dir,
         max_steps=max_steps,
-        per_device_train_batch_size=4,
+        per_device_train_batch_size=2,
         gradient_accumulation_steps=4,
+        warmup_steps=5,
         learning_rate=2e-4,
         fp16=True,
-        logging_steps=10,
+        logging_steps=5,
+        optim="adamw_8bit",
+        weight_decay=0.01,
+        lr_scheduler_type="linear",
+        seed=3407,
         save_steps=max_steps,
+        max_seq_length=2048,
     )
-    try:
-        # trl >= 0.12: SFTConfig with dataset_text_field + max_seq_length inside
-        sft_config = SFTConfig(
-            **base_args,
-            dataset_text_field="text",
-            max_seq_length=2048,
-        )
-        trainer = SFTTrainer(
-            model=model,
-            train_dataset=dataset,
-            args=sft_config,
-        )
-    except TypeError:
-        # trl older: pass kwargs directly
-        sft_config = SFTConfig(**base_args)
-        trainer = SFTTrainer(
-            model=model,
-            train_dataset=dataset,
-            args=sft_config,
-            dataset_text_field="text",
-            max_seq_length=2048,
-        )
+    trainer = SFTTrainer(
+        model=model,
+        tokenizer=tokenizer,
+        train_dataset=dataset,
+        args=sft_config,
+        dataset_text_field="text",
+        packing=False,
+    )
 
     # Train
     trainer.train()

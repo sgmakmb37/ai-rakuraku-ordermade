@@ -191,7 +191,7 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             train_texts=filtered_chunks,
             output_dir=lora_output_dir,
             existing_lora_path=existing_lora_path,
-            max_steps=500,
+            max_steps=60,
         )
 
         # 9. Quantize model
