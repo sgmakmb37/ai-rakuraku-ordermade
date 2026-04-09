@@ -1,12 +1,16 @@
-torch>=2.0.0
-transformers>=4.36.0
-peft>=0.7.0
-bitsandbytes>=0.41.0
-unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git
+# PyTorch and vision (must match base image runpod/pytorch:2.1.0-py3.10-cuda11.8.0)
+# Base image already provides torch 2.1.0, torchvision 0.16.0+cu118
+# Pin to prevent unsloth from upgrading torch and breaking compatibility
+torch==2.1.0
+torchvision==0.16.0
+transformers>=4.36.0,<4.50.0
+peft>=0.7.0,<0.13.0
+bitsandbytes>=0.41.0,<0.45.0
+unsloth==2024.8
 redis>=5.0.0
 supabase>=2.0.0
 trafilatura>=1.6.0
 pymupdf>=1.23.0
-datasets>=2.14.0
-trl>=0.7.0
+datasets>=2.14.0,<3.0.0
+trl>=0.7.0,<0.11.0
 runpod>=1.6.0
