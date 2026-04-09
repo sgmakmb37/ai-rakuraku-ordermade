@@ -218,9 +218,9 @@ def train_lora(
     )
     trainer = SFTTrainer(
         model=model,
+        tokenizer=tokenizer,
         train_dataset=dataset,
         args=sft_config,
-        processing_class=tokenizer,
     )
 
     # Train
