@@ -4,8 +4,7 @@ from typing import Optional
 import pymupdf
 from datasets import Dataset
 from trafilatura import extract, fetch_url
-from transformers import TrainingArguments
-from trl import SFTTrainer
+from trl import SFTConfig, SFTTrainer
 from unsloth import FastLanguageModel
 
 
@@ -198,22 +197,23 @@ def train_lora(
     # Prepare dataset
     dataset = Dataset.from_dict({"text": train_texts})
 
-    # Setup trainer
+    # Setup trainer (trl >= 0.12 uses SFTConfig)
+    sft_config = SFTConfig(
+        output_dir=output_dir,
+        max_steps=max_steps,
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=4,
+        learning_rate=2e-4,
+        fp16=True,
+        logging_steps=10,
+        save_steps=max_steps,
+        dataset_text_field="text",
+        max_seq_length=2048,
+    )
     trainer = SFTTrainer(
         model=model,
         train_dataset=dataset,
-        args=TrainingArguments(
-            output_dir=output_dir,
-            max_steps=max_steps,
-            per_device_train_batch_size=4,
-            gradient_accumulation_steps=4,
-            learning_rate=2e-4,
-            fp16=True,
-            logging_steps=10,
-            save_steps=max_steps,
-        ),
-        dataset_text_field="text",
-        max_seq_length=2048,
+        args=sft_config,
     )
 
     # Train
