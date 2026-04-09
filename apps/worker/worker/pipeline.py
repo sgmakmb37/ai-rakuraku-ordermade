@@ -197,8 +197,8 @@ def train_lora(
     # Prepare dataset
     dataset = Dataset.from_dict({"text": train_texts})
 
-    # Setup trainer (trl >= 0.12 uses SFTConfig)
-    sft_config = SFTConfig(
+    # Setup trainer — handle both old/new trl APIs
+    base_args = dict(
         output_dir=output_dir,
         max_steps=max_steps,
         per_device_train_batch_size=4,
@@ -207,14 +207,29 @@ def train_lora(
         fp16=True,
         logging_steps=10,
         save_steps=max_steps,
-        dataset_text_field="text",
-        max_seq_length=2048,
     )
-    trainer = SFTTrainer(
-        model=model,
-        train_dataset=dataset,
-        args=sft_config,
-    )
+    try:
+        # trl >= 0.12: SFTConfig with dataset_text_field + max_seq_length inside
+        sft_config = SFTConfig(
+            **base_args,
+            dataset_text_field="text",
+            max_seq_length=2048,
+        )
+        trainer = SFTTrainer(
+            model=model,
+            train_dataset=dataset,
+            args=sft_config,
+        )
+    except TypeError:
+        # trl older: pass kwargs directly
+        sft_config = SFTConfig(**base_args)
+        trainer = SFTTrainer(
+            model=model,
+            train_dataset=dataset,
+            args=sft_config,
+            dataset_text_field="text",
+            max_seq_length=2048,
+        )
 
     # Train
     trainer.train()

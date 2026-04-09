@@ -29,8 +29,9 @@ jobs:
         with:
           context: ./apps/worker
           push: true
+          no-cache: true
+          build-args: |
+            BUILD_SHA=${{ github.sha }}
           tags: |
             masgma/ai-rakuraku-worker:latest
             masgma/ai-rakuraku-worker:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
