@@ -135,15 +135,21 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
         )
         data_sources = data_sources_result.data or []
 
-        # 4. Extract text from each source
+        # 4. Use pre-extracted content from each source
         all_texts = []
         for source in data_sources:
-            source_type = source.get("source_type", "url")
-            source_value = source.get("source_value", "")
-            logger.info(f"Extracting text from {source_type}: {source_value}")
-            text = extract_text(source_type, source_value)
-            if text:
-                all_texts.append(text)
+            content = source.get("content", "") or ""
+            if content.strip():
+                all_texts.append(content)
+                continue
+            # Fallback: re-extract if content empty (legacy URL/file rows)
+            source_type = source.get("type") or source.get("source_type") or "url"
+            source_value = source.get("source_value") or source.get("name") or ""
+            if source_value:
+                logger.info(f"Re-extracting text from {source_type}: {source_value}")
+                text = extract_text(source_type, source_value)
+                if text:
+                    all_texts.append(text)
 
         combined_text = "\n\n".join(all_texts)
         if not combined_text.strip():
