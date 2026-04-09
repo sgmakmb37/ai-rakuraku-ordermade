@@ -197,9 +197,8 @@ def train_lora(
     # Prepare dataset
     dataset = Dataset.from_dict({"text": train_texts})
 
-    # Setup trainer — unsloth official pattern:
-    # max_seq_length inside SFTConfig, dataset_text_field on SFTTrainer kwarg,
-    # tokenizer explicitly passed to SFTTrainer.
+    # Setup trainer — trl v1 uses max_length (was max_seq_length).
+    # dataset_text_field auto-detected from "text" column.
     sft_config = SFTConfig(
         output_dir=output_dir,
         max_steps=max_steps,
@@ -214,15 +213,14 @@ def train_lora(
         lr_scheduler_type="linear",
         seed=3407,
         save_steps=max_steps,
-        max_seq_length=2048,
+        max_length=2048,
+        packing=False,
     )
     trainer = SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
         train_dataset=dataset,
         args=sft_config,
-        dataset_text_field="text",
-        packing=False,
+        processing_class=tokenizer,
     )
 
     # Train
