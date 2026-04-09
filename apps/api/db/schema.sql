@@ -8,7 +8,7 @@ create table if not exists projects (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null,
-  model_type text not null check (model_type in ('qwen2.5-1.5b', 'qwen2.5-3b')),
+  model_type text not null check (model_type in ('qwen2.5-1.5b', 'qwen2.5-3b', 'gemma-3n-e2b', 'gemma-3n-e4b')),
   genre text not null,
   description text default '',
   status text not null default 'created' check (status in ('created', 'training', 'completed', 'failed')),

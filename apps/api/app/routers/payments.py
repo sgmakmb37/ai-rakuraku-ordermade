@@ -127,17 +127,37 @@ async def stripe_webhook(request: Request, supabase: Client = Depends(get_supaba
             "created_at": datetime.now(timezone.utc).isoformat(),
         }).execute()
 
-        # Redisキュー投入
-        try:
-            redis_client = get_redis()
-            queue_data = json.dumps({"job_id": job_id, "project_id": project_id})
-            redis_client.rpush("training_jobs", queue_data)
-        except redis.RedisError:
-            logger.exception("Failed to enqueue training job %s", job_id)
-            supabase.table("training_jobs").update(
-                {"status": "failed", "error_message": "Queue error"}
-            ).eq("id", job_id).execute()
-            raise HTTPException(status_code=502, detail="Queue service error")
+        # ジョブ投入: RunPod Serverless or Redis
+        if settings.runpod_endpoint_id and settings.runpod_api_key:
+            # RunPod Serverless API経由
+            try:
+                import httpx
+                with httpx.Client() as client:
+                    resp = client.post(
+                        f"https://api.runpod.ai/v2/{settings.runpod_endpoint_id}/run",
+                        headers={"Authorization": f"Bearer {settings.runpod_api_key}"},
+                        json={"input": {"job_id": job_id, "project_id": project_id}},
+                        timeout=30.0,
+                    )
+                    resp.raise_for_status()
+            except Exception:
+                logger.exception("Failed to submit RunPod job %s", job_id)
+                supabase.table("training_jobs").update(
+                    {"status": "failed", "error_message": "RunPod API error"}
+                ).eq("id", job_id).execute()
+                raise HTTPException(status_code=502, detail="RunPod API error")
+        else:
+            # Redisキュー投入
+            try:
+                redis_client = get_redis()
+                queue_data = json.dumps({"job_id": job_id, "project_id": project_id})
+                redis_client.rpush("training_jobs", queue_data)
+            except redis.RedisError:
+                logger.exception("Failed to enqueue training job %s", job_id)
+                supabase.table("training_jobs").update(
+                    {"status": "failed", "error_message": "Queue error"}
+                ).eq("id", job_id).execute()
+                raise HTTPException(status_code=502, detail="Queue service error")
 
         # paymentsステータス更新（ジョブ作成後）
         supabase.table("payments").update({

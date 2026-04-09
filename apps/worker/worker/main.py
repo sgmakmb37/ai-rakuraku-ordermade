@@ -25,6 +25,8 @@ RUNPOD_MODE = os.getenv("RUNPOD_MODE", "0") == "1"
 MODEL_ID_MAP = {
     "qwen2.5-1.5b": "Qwen/Qwen2.5-1.5B",
     "qwen2.5-3b": "Qwen/Qwen2.5-3B",
+    "gemma-3n-e2b": "unsloth/gemma-3n-E2B-it",
+    "gemma-3n-e4b": "unsloth/gemma-3n-E4B-it",
 }
 
 

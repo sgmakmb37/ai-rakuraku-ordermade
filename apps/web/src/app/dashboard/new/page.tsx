@@ -6,8 +6,10 @@ import { api } from "@/lib/api";
 
 type Step = 1 | 2 | 3 | 4;
 
+type ModelType = "qwen2.5-1.5b" | "qwen2.5-3b" | "gemma-3n-e2b" | "gemma-3n-e4b";
+
 interface FormData {
-  modelType: "qwen2.5-1.5b" | "qwen2.5-3b";
+  modelType: ModelType;
   genre: string;
   purpose: string;
   urls: string[];
@@ -44,7 +46,7 @@ export default function NewProjectPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData({ ...formData, modelType: e.target.value as "qwen2.5-1.5b" | "qwen2.5-3b" });
+    setFormData({ ...formData, modelType: e.target.value as ModelType });
   };
 
   const handleGenreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -245,21 +247,27 @@ export default function NewProjectPage() {
                 ステップ1: モデル選択
               </h2>
               <div className="space-y-4">
-                <label className="block text-gray-700 font-medium mb-2">
+                <label className="block text-gray-900 font-medium mb-2">
                   学習に使用するモデルを選択してください
                 </label>
                 <select
                   value={formData.modelType}
                   onChange={handleModelChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
                 >
                   <option value="qwen2.5-1.5b">高速（軽量）- Qwen2.5 1.5B</option>
                   <option value="qwen2.5-3b">標準（高品質）- Qwen2.5 3B</option>
+                  <option value="gemma-3n-e2b">マルチモーダル軽量 - Gemma 3n E2B</option>
+                  <option value="gemma-3n-e4b">マルチモーダル標準 - Gemma 3n E4B</option>
                 </select>
-                <p className="text-sm text-gray-600 mt-3">
+                <p className="text-sm text-gray-700 mt-3">
                   {formData.modelType === "qwen2.5-1.5b"
-                    ? "軽量モデルは高速に学習できますが、精度は標準モデルより低い場合があります。"
-                    : "標準モデルは高品質な学習が期待できます。学習時間が少し長くなります。"}
+                    ? "軽量モデルは高速に学習できますが、精度は標準モデルより低い場合があります。日本語性能に強みがあります。"
+                    : formData.modelType === "qwen2.5-3b"
+                    ? "標準モデルは高品質な学習が期待できます。日本語性能に強みがあります。学習時間が少し長くなります。"
+                    : formData.modelType === "gemma-3n-e2b"
+                    ? "Gemma 3n E2B はGoogle製の軽量モデルです。マルチモーダル対応・多言語対応が特徴です。"
+                    : "Gemma 3n E4B はGoogle製の高品質モデルです。マルチモーダル対応・多言語対応が特徴で、より精度が高くなります。"}
                 </p>
               </div>
             </div>
@@ -274,13 +282,13 @@ export default function NewProjectPage() {
               <div className="space-y-6">
                 {/* Genre Selection */}
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">
+                  <label className="block text-gray-900 font-medium mb-2">
                     ジャンルを選択
                   </label>
                   <select
                     value={formData.genre}
                     onChange={handleGenreChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
                   >
                     <option value="">選択してください</option>
                     {GENRES.map((g) => (
@@ -293,7 +301,7 @@ export default function NewProjectPage() {
 
                 {/* Purpose Input */}
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">
+                  <label className="block text-gray-900 font-medium mb-2">
                     用途説明（任意）
                   </label>
                   <textarea
@@ -301,7 +309,7 @@ export default function NewProjectPage() {
                     onChange={handlePurposeChange}
                     placeholder="例：ECサイトの問い合わせ対応用"
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -317,7 +325,7 @@ export default function NewProjectPage() {
               <div className="space-y-6">
                 {/* URL Input */}
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">
+                  <label className="block text-gray-900 font-medium mb-2">
                     URLを追加（最大5件）
                   </label>
                   <div className="flex gap-2 mb-3">
@@ -327,7 +335,7 @@ export default function NewProjectPage() {
                       onChange={(e) => setNewUrl(e.target.value)}
                       placeholder="https://example.com"
                       onKeyPress={(e) => e.key === "Enter" && handleAddUrl()}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm text-gray-900 placeholder:text-gray-500"
                     />
                     <button
                       onClick={handleAddUrl}
@@ -359,7 +367,7 @@ export default function NewProjectPage() {
 
                 {/* File Upload */}
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">
+                  <label className="block text-gray-900 font-medium mb-2">
                     ファイルをアップロード（.txt/.pdf/.csv/.json、最大5件）
                   </label>
                   <div className="border-2 border-dashed border-indigo-300 rounded-lg p-6 text-center cursor-pointer hover:bg-indigo-50 transition-colors">
