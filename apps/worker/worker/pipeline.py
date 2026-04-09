@@ -171,8 +171,27 @@ def train_lora(
         model_id,
         trust_remote_code=True,
     )
+    # Ensure tokenizer has a proper eos_token (Qwen base/Gemma fallbacks)
+    if not tokenizer.eos_token or tokenizer.eos_token == "<EOS_TOKEN>":
+        if "qwen" in model_id.lower():
+            tokenizer.eos_token = "<|endoftext|>"
+        elif "gemma" in model_id.lower():
+            tokenizer.eos_token = "<end_of_turn>"
+        else:
+            tokenizer.eos_token = "</s>"
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+
+    import sys
+    import transformers as _tf
+    import trl as _trl
+    import peft as _peft
+    print(
+        f"[VERSIONS] python={sys.version.split()[0]} "
+        f"transformers={_tf.__version__} trl={_trl.__version__} "
+        f"peft={_peft.__version__} eos='{tokenizer.eos_token}'",
+        flush=True,
+    )
 
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
@@ -206,7 +225,8 @@ def train_lora(
 
     dataset = Dataset.from_dict({"text": train_texts})
 
-    eos_token = tokenizer.eos_token or tokenizer.pad_token
+    # Do NOT pass eos_token to SFTConfig — let SFTTrainer auto-resolve from
+    # processing_class.eos_token (tokenizer.eos_token we set above).
     sft_config = SFTConfig(
         output_dir=output_dir,
         max_steps=max_steps,
@@ -223,7 +243,6 @@ def train_lora(
         save_steps=max_steps,
         max_length=2048,
         packing=False,
-        eos_token=eos_token,
         dataset_text_field="text",
         report_to=[],
     )
