@@ -30,6 +30,8 @@ const GENRES = [
   "その他",
 ];
 
+const STEP_LABELS = ["モデル選択", "用途設定", "データ入力", "確認・開始"];
+
 export default function NewProjectPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -209,76 +211,163 @@ export default function NewProjectPage() {
   const modelLabel =
     formData.modelType === "qwen2.5-1.5b"
       ? "高速（軽量）- Qwen2.5 1.5B"
-      : "標準（高品質）- Qwen2.5 3B";
+      : formData.modelType === "qwen2.5-3b"
+      ? "標準（高品質）- Qwen2.5 3B"
+      : formData.modelType === "gemma-4-e2b"
+      ? "Google Gemma 4 E2B（軽量）"
+      : "Google Gemma 4 E4B（高品質）";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div
+      className="animate-fade-in"
+      style={{
+        minHeight: "100vh",
+        background: "var(--color-bg)",
+        padding: "2rem 1rem",
+      }}
+    >
+      <div style={{ maxWidth: 680, margin: "0 auto" }}>
         {/* Back to Dashboard Link */}
-        <div className="mb-6">
+        <div style={{ marginBottom: "1.5rem" }}>
           <button
             onClick={() => router.push("/dashboard")}
-            className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              color: "var(--color-link)",
+              fontSize: "0.875rem",
+              textDecoration: "none",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
           >
             ← ダッシュボードに戻る
           </button>
         </div>
 
         {/* Step Indicator */}
-        <div className="mb-8">
-          <div className="flex justify-between mb-4">
+        <div style={{ marginBottom: "2rem" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "0.75rem" }}>
             {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex items-center flex-1">
+              <div
+                key={step}
+                style={{ display: "flex", alignItems: "center", flex: step < 4 ? 1 : "none" }}
+              >
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-colors ${
-                    step <= currentStep
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-300 text-gray-600"
-                  }`}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.8125rem",
+                    fontWeight: 600,
+                    flexShrink: 0,
+                    background:
+                      step <= currentStep
+                        ? "var(--color-primary)"
+                        : "var(--color-border)",
+                    color:
+                      step <= currentStep
+                        ? "#fff"
+                        : "var(--color-text-secondary)",
+                    transition: "background 0.2s",
+                  }}
                 >
                   {step}
                 </div>
                 {step < 4 && (
                   <div
-                    className={`flex-1 h-1 mx-2 transition-colors ${
-                      step < currentStep ? "bg-indigo-600" : "bg-gray-300"
-                    }`}
+                    style={{
+                      flex: 1,
+                      height: 2,
+                      margin: "0 0.5rem",
+                      background:
+                        step < currentStep
+                          ? "var(--color-primary)"
+                          : "var(--color-border)",
+                      transition: "background 0.2s",
+                    }}
                   />
                 )}
               </div>
             ))}
           </div>
-          <div className="flex justify-between text-xs text-gray-600">
-            <span>モデル選択</span>
-            <span>用途設定</span>
-            <span>データ入力</span>
-            <span>確認・開始</span>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              paddingRight: "0px",
+            }}
+          >
+            {STEP_LABELS.map((label, i) => (
+              <span
+                key={label}
+                style={{
+                  fontSize: "0.75rem",
+                  color:
+                    i + 1 === currentStep
+                      ? "var(--color-primary)"
+                      : "var(--color-text-secondary)",
+                  fontWeight: i + 1 === currentStep ? 500 : 400,
+                  width: i < 3 ? "calc(25% - 0.25rem)" : "auto",
+                }}
+              >
+                {label}
+              </span>
+            ))}
           </div>
         </div>
 
         {/* Card Container */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="card-apple">
           {/* Step 1: Model Selection */}
           {currentStep === 1 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              <h2
+                style={{
+                  fontSize: "1.375rem",
+                  fontWeight: 600,
+                  color: "var(--color-text-primary)",
+                  marginBottom: "1.5rem",
+                  letterSpacing: "-0.02em",
+                }}
+              >
                 ステップ1: モデル選択
               </h2>
-              <div className="space-y-4">
-                <label className="block text-gray-900 font-medium mb-2">
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    color: "var(--color-text-primary)",
+                    marginBottom: "0.5rem",
+                  }}
+                >
                   学習に使用するモデルを選択してください
                 </label>
                 <select
                   value={formData.modelType}
                   onChange={handleModelChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                  className="input-apple"
+                  style={{ width: "100%" }}
                 >
                   <option value="qwen2.5-1.5b">高速（軽量）- Qwen2.5 1.5B</option>
                   <option value="qwen2.5-3b">標準（高品質）- Qwen2.5 3B</option>
                   <option value="gemma-4-e2b">Google Gemma 4 E2B（軽量）</option>
                   <option value="gemma-4-e4b">Google Gemma 4 E4B（高品質）</option>
                 </select>
-                <p className="text-sm text-gray-700 mt-3">
+                <p
+                  className="text-caption"
+                  style={{
+                    color: "var(--color-text-secondary)",
+                    marginTop: "0.75rem",
+                  }}
+                >
                   {formData.modelType === "qwen2.5-1.5b"
                     ? "軽量モデルは高速に学習できますが、精度は標準モデルより低い場合があります。日本語性能に強みがあります。"
                     : formData.modelType === "qwen2.5-3b"
@@ -294,19 +383,36 @@ export default function NewProjectPage() {
           {/* Step 2: Usage Setting */}
           {currentStep === 2 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              <h2
+                style={{
+                  fontSize: "1.375rem",
+                  fontWeight: 600,
+                  color: "var(--color-text-primary)",
+                  marginBottom: "1.5rem",
+                  letterSpacing: "-0.02em",
+                }}
+              >
                 ステップ2: 用途設定
               </h2>
-              <div className="space-y-6">
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 {/* Genre Selection */}
                 <div>
-                  <label className="block text-gray-900 font-medium mb-2">
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      color: "var(--color-text-primary)",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
                     ジャンルを選択
                   </label>
                   <select
                     value={formData.genre}
                     onChange={handleGenreChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                    className="input-apple"
+                    style={{ width: "100%" }}
                   >
                     <option value="">選択してください</option>
                     {GENRES.map((g) => (
@@ -319,7 +425,15 @@ export default function NewProjectPage() {
 
                 {/* Purpose Input */}
                 <div>
-                  <label className="block text-gray-900 font-medium mb-2">
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      color: "var(--color-text-primary)",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
                     用途説明（任意）
                   </label>
                   <textarea
@@ -327,7 +441,8 @@ export default function NewProjectPage() {
                     onChange={handlePurposeChange}
                     placeholder="例：ECサイトの問い合わせ対応用"
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder:text-gray-500"
+                    className="input-apple"
+                    style={{ width: "100%", resize: "vertical" }}
                   />
                 </div>
               </div>
@@ -337,43 +452,93 @@ export default function NewProjectPage() {
           {/* Step 3: Data Input */}
           {currentStep === 3 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              <h2
+                style={{
+                  fontSize: "1.375rem",
+                  fontWeight: 600,
+                  color: "var(--color-text-primary)",
+                  marginBottom: "1.5rem",
+                  letterSpacing: "-0.02em",
+                }}
+              >
                 ステップ3: データ入力
               </h2>
-              <div className="space-y-6">
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 {/* URL Input */}
                 <div>
-                  <label className="block text-gray-900 font-medium mb-2">
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      color: "var(--color-text-primary)",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
                     URLを追加（最大5件）
                   </label>
-                  <div className="flex gap-2 mb-3">
+                  <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
                     <input
                       type="text"
                       value={newUrl}
                       onChange={(e) => setNewUrl(e.target.value)}
                       placeholder="https://example.com"
                       onKeyPress={(e) => e.key === "Enter" && handleAddUrl()}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm text-gray-900 placeholder:text-gray-500"
+                      className="input-apple"
+                      style={{ flex: 1 }}
                     />
                     <button
                       onClick={handleAddUrl}
                       disabled={!newUrl.trim() || formData.urls.length >= 5}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium text-sm"
+                      className="btn-primary"
+                      style={{
+                        padding: "0 1rem",
+                        opacity: !newUrl.trim() || formData.urls.length >= 5 ? 0.4 : 1,
+                        cursor: !newUrl.trim() || formData.urls.length >= 5 ? "not-allowed" : "pointer",
+                      }}
                     >
                       追加
                     </button>
                   </div>
                   {formData.urls.length > 0 && (
-                    <ul className="space-y-2 mb-4">
+                    <ul style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                       {formData.urls.map((url, idx) => (
                         <li
                           key={idx}
-                          className="flex justify-between items-center bg-gray-50 p-3 rounded-lg text-sm"
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            background: "var(--color-bg)",
+                            padding: "0.625rem 0.875rem",
+                            borderRadius: 8,
+                            fontSize: "0.875rem",
+                          }}
                         >
-                          <span className="text-gray-700 truncate">{url}</span>
+                          <span
+                            style={{
+                              color: "var(--color-text-primary)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              flex: 1,
+                              marginRight: "0.75rem",
+                            }}
+                          >
+                            {url}
+                          </span>
                           <button
                             onClick={() => handleRemoveUrl(idx)}
-                            className="text-red-600 hover:text-red-800 font-medium"
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: 0,
+                              cursor: "pointer",
+                              color: "var(--color-error)",
+                              fontSize: "0.8125rem",
+                              fontWeight: 500,
+                              flexShrink: 0,
+                            }}
                           >
                             削除
                           </button>
@@ -385,41 +550,97 @@ export default function NewProjectPage() {
 
                 {/* File Upload */}
                 <div>
-                  <label className="block text-gray-900 font-medium mb-2">
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      color: "var(--color-text-primary)",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
                     ファイルをアップロード（.txt/.pdf/.csv/.json、最大5件）
                   </label>
-                  <div className="border-2 border-dashed border-indigo-300 rounded-lg p-6 text-center cursor-pointer hover:bg-indigo-50 transition-colors">
+                  <div
+                    style={{
+                      border: "2px dashed var(--color-border)",
+                      borderRadius: 12,
+                      padding: "1.5rem",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "var(--color-bg)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "transparent")
+                    }
+                  >
                     <input
                       type="file"
                       multiple
                       accept=".txt,.pdf,.csv,.json"
                       onChange={handleFileChange}
-                      className="hidden"
+                      style={{ display: "none" }}
                       id="fileInput"
                     />
-                    <label
-                      htmlFor="fileInput"
-                      className="cursor-pointer block"
-                    >
-                      <p className="text-gray-700 font-medium">
+                    <label htmlFor="fileInput" style={{ cursor: "pointer", display: "block" }}>
+                      <p
+                        style={{
+                          fontSize: "0.875rem",
+                          fontWeight: 500,
+                          color: "var(--color-text-primary)",
+                        }}
+                      >
                         ドラッグ&ドロップまたはクリック
                       </p>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p
+                        className="text-caption"
+                        style={{ color: "var(--color-text-secondary)", marginTop: "0.25rem" }}
+                      >
                         対応形式: .txt, .pdf, .csv, .json
                       </p>
                     </label>
                   </div>
                   {formData.files.length > 0 && (
-                    <ul className="space-y-2 mt-4">
+                    <ul
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
+                        marginTop: "0.75rem",
+                      }}
+                    >
                       {formData.files.map((file, idx) => (
                         <li
                           key={idx}
-                          className="flex justify-between items-center bg-gray-50 p-3 rounded-lg text-sm"
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            background: "var(--color-bg)",
+                            padding: "0.625rem 0.875rem",
+                            borderRadius: 8,
+                            fontSize: "0.875rem",
+                          }}
                         >
-                          <span className="text-gray-700">{file.name}</span>
+                          <span style={{ color: "var(--color-text-primary)" }}>
+                            {file.name}
+                          </span>
                           <button
                             onClick={() => handleRemoveFile(idx)}
-                            className="text-red-600 hover:text-red-800 font-medium"
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: 0,
+                              cursor: "pointer",
+                              color: "var(--color-error)",
+                              fontSize: "0.8125rem",
+                              fontWeight: 500,
+                              flexShrink: 0,
+                              marginLeft: "0.75rem",
+                            }}
                           >
                             削除
                           </button>
@@ -430,13 +651,25 @@ export default function NewProjectPage() {
                 </div>
 
                 {/* Counter */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-gray-700">
-                    <span className="font-semibold">追加済みソース:</span>{" "}
+                <div
+                  style={{
+                    background: "var(--color-bg)",
+                    borderRadius: 10,
+                    padding: "1rem 1.25rem",
+                  }}
+                >
+                  <p
+                    className="text-caption"
+                    style={{ color: "var(--color-text-primary)", marginBottom: "0.25rem" }}
+                  >
+                    <span style={{ fontWeight: 600 }}>追加済みソース:</span>{" "}
                     {sourceCount}件 / 5件
                   </p>
-                  <p className="text-sm text-gray-700 mt-1">
-                    <span className="font-semibold">推定文字数:</span>{" "}
+                  <p
+                    className="text-caption"
+                    style={{ color: "var(--color-text-primary)" }}
+                  >
+                    <span style={{ fontWeight: 600 }}>推定文字数:</span>{" "}
                     {charCount.toLocaleString()}文字 / 500,000文字
                   </p>
                 </div>
@@ -447,48 +680,81 @@ export default function NewProjectPage() {
           {/* Step 4: Confirmation */}
           {currentStep === 4 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              <h2
+                style={{
+                  fontSize: "1.375rem",
+                  fontWeight: 600,
+                  color: "var(--color-text-primary)",
+                  marginBottom: "1.5rem",
+                  letterSpacing: "-0.02em",
+                }}
+              >
                 ステップ4: 確認・開始
               </h2>
-              <div className="bg-gray-50 rounded-lg p-6 space-y-4 mb-6">
-                <div>
-                  <p className="text-sm text-gray-600">モデル</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {modelLabel}
-                  </p>
-                </div>
-                <div className="border-t border-gray-300 pt-4">
-                  <p className="text-sm text-gray-600">ジャンル</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {formData.genre || "未選択"}
-                  </p>
-                </div>
-                <div className="border-t border-gray-300 pt-4">
-                  <p className="text-sm text-gray-600">用途説明</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {formData.purpose || "入力なし"}
-                  </p>
-                </div>
-                <div className="border-t border-gray-300 pt-4">
-                  <p className="text-sm text-gray-600">データソース数</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {sourceCount}件
-                  </p>
-                </div>
+
+              <div
+                style={{
+                  background: "var(--color-bg)",
+                  borderRadius: 10,
+                  padding: "1.25rem",
+                  marginBottom: "1.5rem",
+                  display: "grid",
+                  gap: 0,
+                }}
+              >
+                {[
+                  { label: "モデル", value: modelLabel },
+                  { label: "ジャンル", value: formData.genre || "未選択" },
+                  { label: "用途説明", value: formData.purpose || "入力なし" },
+                  { label: "データソース数", value: `${sourceCount}件` },
+                ].map((row, i) => (
+                  <div
+                    key={row.label}
+                    style={{
+                      padding: "0.875rem 0",
+                      borderTop: i > 0 ? "1px solid var(--color-border)" : "none",
+                    }}
+                  >
+                    <p
+                      className="text-caption"
+                      style={{ color: "var(--color-text-secondary)", marginBottom: "0.25rem" }}
+                    >
+                      {row.label}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "0.9375rem",
+                        fontWeight: 500,
+                        color: "var(--color-text-primary)",
+                      }}
+                    >
+                      {row.value}
+                    </p>
+                  </div>
+                ))}
               </div>
 
               <button
                 onClick={handleStart}
                 disabled={isLoading}
-                className={`w-full py-4 rounded-lg font-bold text-lg mb-4 transition-colors flex items-center justify-center gap-2 ${
-                  isLoading
-                    ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700"
-                }`}
+                className="btn-primary"
+                style={{
+                  width: "100%",
+                  padding: "0.875rem 1.5rem",
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  marginBottom: "1rem",
+                  opacity: isLoading ? 0.6 : 1,
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                }}
               >
                 {isLoading ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    <span className="spinner-apple" />
                     処理中...
                   </>
                 ) : (
@@ -499,11 +765,19 @@ export default function NewProjectPage() {
           )}
 
           {/* Navigation Buttons */}
-          <div className="mt-8 flex justify-between gap-4">
+          <div
+            style={{
+              marginTop: "2rem",
+              display: "flex",
+              gap: "0.75rem",
+              justifyContent: currentStep > 1 ? "space-between" : "flex-end",
+            }}
+          >
             {currentStep > 1 && (
               <button
                 onClick={handleBack}
-                className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                className="btn-secondary"
+                style={{ flex: 1 }}
               >
                 戻る
               </button>
@@ -511,7 +785,8 @@ export default function NewProjectPage() {
             {currentStep < 4 && (
               <button
                 onClick={handleNext}
-                className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+                className="btn-primary"
+                style={{ flex: 1 }}
               >
                 次へ
               </button>

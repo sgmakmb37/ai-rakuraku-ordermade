@@ -187,33 +187,78 @@ export default function LoginPage() {
   }, [view]);
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-indigo-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-indigo-900 dark:to-slate-900">
-      <div className="w-full max-w-md px-6 py-12">
+    <div
+      className="animate-fade-in"
+      style={{
+        minHeight: "100vh",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--color-bg)",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: "448px", padding: "0 1.5rem 3rem" }}>
         {/* Logo & Header */}
-        <div className="text-center mb-12">
-          <div className="mb-6">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg mb-4">
-              <span className="text-xl font-bold text-white">AI</span>
+        <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+          <div style={{ marginBottom: "1.25rem" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "56px",
+                height: "56px",
+                borderRadius: "50%",
+                background: "var(--color-primary)",
+                marginBottom: "1.25rem",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "1.25rem",
+                  fontWeight: 700,
+                  color: "#ffffff",
+                  letterSpacing: "-0.5px",
+                }}
+              >
+                AI
+              </span>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+          <h1
+            className="text-section"
+            style={{
+              color: "var(--color-text)",
+              marginBottom: "0.5rem",
+            }}
+          >
             AIらくらく
             <br />
             オーダーメイド
           </h1>
-          <p className="text-base text-slate-600 dark:text-slate-300 font-medium">
+          <p
+            className="text-caption"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
             誰でもAIをオーダーメイドできる
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8">
+        <div className="card-apple">
           {view === "login" && (
-            <form onSubmit={handleLoginSubmit} className="space-y-6">
+            <form onSubmit={handleLoginSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
               <div>
                 <label
                   htmlFor="login-email"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "var(--color-text-secondary)",
+                    marginBottom: "0.5rem",
+                  }}
                 >
                   メールアドレス
                 </label>
@@ -225,14 +270,20 @@ export default function LoginPage() {
                   placeholder="you@example.com"
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="input-apple"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="login-password"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "var(--color-text-secondary)",
+                    marginBottom: "0.5rem",
+                  }}
                 >
                   パスワード
                 </label>
@@ -244,45 +295,32 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="input-apple"
                 />
               </div>
 
               {error && (
-                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                  <p className="text-sm text-red-700 dark:text-red-400">
-                    {error}
-                  </p>
+                <div
+                  style={{
+                    padding: "12px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 59, 48, 0.1)",
+                    color: "var(--color-error)",
+                  }}
+                >
+                  <p style={{ fontSize: "14px", margin: 0 }}>{error}</p>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={isLoading || !email || !password}
-                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                className="btn-primary"
+                style={{ width: "100%" }}
               >
                 {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg
-                      className="w-4 h-4 animate-spin"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                    <span className="spinner-apple" />
                     ログイン中...
                   </span>
                 ) : (
@@ -290,7 +328,7 @@ export default function LoginPage() {
                 )}
               </button>
 
-              <div className="flex flex-col gap-2 text-sm text-center">
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", textAlign: "center" }}>
                 <button
                   type="button"
                   onClick={() => {
@@ -299,7 +337,17 @@ export default function LoginPage() {
                     setEmail("");
                     setPassword("");
                   }}
-                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    color: "var(--color-link)",
+                    textDecoration: "none",
+                    padding: "4px 0",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                  onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
                 >
                   アカウントを作成
                 </button>
@@ -310,7 +358,17 @@ export default function LoginPage() {
                     setError("");
                     setEmail("");
                   }}
-                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    color: "var(--color-link)",
+                    textDecoration: "none",
+                    padding: "4px 0",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                  onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
                 >
                   パスワードを忘れた方
                 </button>
@@ -319,11 +377,17 @@ export default function LoginPage() {
           )}
 
           {view === "signup" && (
-            <form onSubmit={handleSignupSubmit} className="space-y-6">
+            <form onSubmit={handleSignupSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
               <div>
                 <label
                   htmlFor="signup-email"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "var(--color-text-secondary)",
+                    marginBottom: "0.5rem",
+                  }}
                 >
                   メールアドレス
                 </label>
@@ -335,14 +399,20 @@ export default function LoginPage() {
                   placeholder="you@example.com"
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="input-apple"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="signup-password"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "var(--color-text-secondary)",
+                    marginBottom: "0.5rem",
+                  }}
                 >
                   パスワード
                 </label>
@@ -354,9 +424,12 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="input-apple"
                 />
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <p
+                  className="text-micro"
+                  style={{ color: "var(--color-text-tertiary)", marginTop: "0.25rem" }}
+                >
                   6文字以上
                 </p>
               </div>
@@ -364,7 +437,13 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="signup-password-confirm"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "var(--color-text-secondary)",
+                    marginBottom: "0.5rem",
+                  }}
                 >
                   パスワード確認
                 </label>
@@ -376,45 +455,32 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="input-apple"
                 />
               </div>
 
               {error && (
-                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                  <p className="text-sm text-red-700 dark:text-red-400">
-                    {error}
-                  </p>
+                <div
+                  style={{
+                    padding: "12px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 59, 48, 0.1)",
+                    color: "var(--color-error)",
+                  }}
+                >
+                  <p style={{ fontSize: "14px", margin: 0 }}>{error}</p>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={isLoading || !email || !password || !passwordConfirm}
-                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                className="btn-primary"
+                style={{ width: "100%" }}
               >
                 {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg
-                      className="w-4 h-4 animate-spin"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                    <span className="spinner-apple" />
                     作成中...
                   </span>
                 ) : (
@@ -422,7 +488,7 @@ export default function LoginPage() {
                 )}
               </button>
 
-              <div className="text-center text-sm">
+              <div style={{ textAlign: "center" }}>
                 <button
                   type="button"
                   onClick={() => {
@@ -432,7 +498,17 @@ export default function LoginPage() {
                     setPassword("");
                     setPasswordConfirm("");
                   }}
-                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    color: "var(--color-link)",
+                    textDecoration: "none",
+                    padding: "4px 0",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                  onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
                 >
                   ログインはこちら
                 </button>
@@ -441,17 +517,28 @@ export default function LoginPage() {
           )}
 
           {view === "verify" && (
-            <form onSubmit={handleVerifySubmit} className="space-y-6">
-              <div className="text-center mb-6">
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            <form onSubmit={handleVerifySubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
+                <h2
+                  style={{
+                    fontSize: "1.31rem",
+                    fontWeight: 700,
+                    color: "var(--color-text)",
+                    marginBottom: "0.5rem",
+                    lineHeight: 1.19,
+                  }}
+                >
                   確認コードを入力
                 </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p
+                  className="text-caption"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   {email}に送信した6桁のコードを入力してください。
                 </p>
               </div>
 
-              <div className="flex gap-3 justify-center">
+              <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
                 {code.map((digit, index) => (
                   <input
                     key={index}
@@ -465,46 +552,55 @@ export default function LoginPage() {
                     inputMode="numeric"
                     maxLength={1}
                     disabled={isLoading}
-                    className="w-12 h-12 text-center text-lg font-semibold border-2 border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    style={{
+                      width: "48px",
+                      height: "56px",
+                      textAlign: "center",
+                      fontSize: "1.25rem",
+                      fontWeight: 600,
+                      borderRadius: "11px",
+                      border: "1px solid var(--color-input-border)",
+                      background: "var(--color-input-bg)",
+                      color: "var(--color-text)",
+                      outline: "none",
+                      transition: "border-color 200ms ease-in-out, box-shadow 200ms ease-in-out",
+                      opacity: isLoading ? 0.42 : 1,
+                      cursor: isLoading ? "not-allowed" : "text",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "var(--color-primary)";
+                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0, 113, 227, 0.2)";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "var(--color-input-border)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
                   />
                 ))}
               </div>
 
               {error && (
-                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                  <p className="text-sm text-red-700 dark:text-red-400">
-                    {error}
-                  </p>
+                <div
+                  style={{
+                    padding: "12px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 59, 48, 0.1)",
+                    color: "var(--color-error)",
+                  }}
+                >
+                  <p style={{ fontSize: "14px", margin: 0 }}>{error}</p>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={isLoading || code.some((c) => !c)}
-                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                className="btn-primary"
+                style={{ width: "100%" }}
               >
                 {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg
-                      className="w-4 h-4 animate-spin"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                    <span className="spinner-apple" />
                     確認中...
                   </span>
                 ) : (
@@ -512,12 +608,23 @@ export default function LoginPage() {
                 )}
               </button>
 
-              <div className="text-center text-sm">
+              <div style={{ textAlign: "center" }}>
                 <button
                   type="button"
                   onClick={handleResendCode}
                   disabled={isLoading}
-                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: isLoading ? "not-allowed" : "pointer",
+                    fontSize: "14px",
+                    color: "var(--color-link)",
+                    textDecoration: "none",
+                    opacity: isLoading ? 0.42 : 1,
+                    padding: "4px 0",
+                  }}
+                  onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.textDecoration = "underline"; }}
+                  onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
                 >
                   コードを再送信
                 </button>
@@ -526,12 +633,23 @@ export default function LoginPage() {
           )}
 
           {view === "forgot" && (
-            <form onSubmit={handleForgotSubmit} className="space-y-6">
-              <div className="text-center mb-6">
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            <form onSubmit={handleForgotSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
+                <h2
+                  style={{
+                    fontSize: "1.31rem",
+                    fontWeight: 700,
+                    color: "var(--color-text)",
+                    marginBottom: "0.5rem",
+                    lineHeight: 1.19,
+                  }}
+                >
                   パスワードをリセット
                 </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p
+                  className="text-caption"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   登録されているメールアドレスを入力してください。
                   <br />
                   リセットメールをお送りします。
@@ -541,7 +659,13 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="forgot-email"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "var(--color-text-secondary)",
+                    marginBottom: "0.5rem",
+                  }}
                 >
                   メールアドレス
                 </label>
@@ -553,45 +677,32 @@ export default function LoginPage() {
                   placeholder="you@example.com"
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="input-apple"
                 />
               </div>
 
               {error && (
-                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                  <p className="text-sm text-red-700 dark:text-red-400">
-                    {error}
-                  </p>
+                <div
+                  style={{
+                    padding: "12px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 59, 48, 0.1)",
+                    color: "var(--color-error)",
+                  }}
+                >
+                  <p style={{ fontSize: "14px", margin: 0 }}>{error}</p>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={isLoading || !email}
-                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                className="btn-primary"
+                style={{ width: "100%" }}
               >
                 {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg
-                      className="w-4 h-4 animate-spin"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                    <span className="spinner-apple" />
                     送信中...
                   </span>
                 ) : (
@@ -599,7 +710,7 @@ export default function LoginPage() {
                 )}
               </button>
 
-              <div className="text-center text-sm">
+              <div style={{ textAlign: "center" }}>
                 <button
                   type="button"
                   onClick={() => {
@@ -607,7 +718,17 @@ export default function LoginPage() {
                     setError("");
                     setEmail("");
                   }}
-                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    color: "var(--color-link)",
+                    textDecoration: "none",
+                    padding: "4px 0",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                  onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
                 >
                   ログインに戻る
                 </button>
@@ -617,7 +738,14 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-8">
+        <p
+          className="text-micro"
+          style={{
+            textAlign: "center",
+            color: "var(--color-text-tertiary)",
+            marginTop: "2rem",
+          }}
+        >
           ログインすることで、
           <br />
           利用規約に同意したものとみなされます。

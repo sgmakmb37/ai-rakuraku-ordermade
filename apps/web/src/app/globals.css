@@ -1,26 +1,256 @@
 @import "tailwindcss";
 
+/* ===== Apple-Inspired Design Tokens ===== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colors — Light */
+  --color-primary: #0071e3;
+  --color-primary-hover: #0077ed;
+  --color-bg: #f5f5f7;
+  --color-bg-white: #ffffff;
+  --color-text: #1d1d1f;
+  --color-text-secondary: rgba(0, 0, 0, 0.8);
+  --color-text-tertiary: rgba(0, 0, 0, 0.48);
+  --color-link: #0066cc;
+  --color-success: #34c759;
+  --color-warning: #ff9f0a;
+  --color-error: #ff3b30;
+  --color-border: rgba(0, 0, 0, 0.04);
+  --color-card-bg: #ffffff;
+  --color-card-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
+  --color-input-border: rgba(0, 0, 0, 0.12);
+  --color-input-bg: #ffffff;
+  --color-nav-bg: rgba(255, 255, 255, 0.72);
+  --color-btn-secondary-bg: #1d1d1f;
+  --color-surface-hover: rgba(0, 0, 0, 0.04);
+}
+
+.dark {
+  /* Colors — Dark */
+  --color-primary: #0071e3;
+  --color-primary-hover: #2997ff;
+  --color-bg: #000000;
+  --color-bg-white: #1d1d1f;
+  --color-text: #f5f5f7;
+  --color-text-secondary: rgba(255, 255, 255, 0.8);
+  --color-text-tertiary: rgba(255, 255, 255, 0.48);
+  --color-link: #2997ff;
+  --color-success: #30d158;
+  --color-warning: #ff9f0a;
+  --color-error: #ff453a;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-card-bg: #1c1c1e;
+  --color-card-shadow: none;
+  --color-input-border: rgba(255, 255, 255, 0.12);
+  --color-input-bg: #2c2c2e;
+  --color-nav-bg: rgba(0, 0, 0, 0.8);
+  --color-btn-secondary-bg: #f5f5f7;
+  --color-surface-hover: rgba(255, 255, 255, 0.06);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text);
+  --font-sans: "Inter", "Noto Sans JP", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ===== Base ===== */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: "Inter", "Noto Sans JP", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Apple Typography ===== */
+
+.text-display {
+  font-size: 3.5rem;
+  font-weight: 600;
+  line-height: 1.07;
+  letter-spacing: -0.28px;
+}
+
+.text-section {
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 1.10;
+  letter-spacing: normal;
+}
+
+.text-tile {
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: 0.196px;
+}
+
+.text-card-title {
+  font-size: 1.31rem;
+  font-weight: 700;
+  line-height: 1.19;
+  letter-spacing: 0.231px;
+}
+
+.text-body-emphasis {
+  font-size: 1.06rem;
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.374px;
+}
+
+.text-caption {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+}
+
+.text-micro {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.33;
+  letter-spacing: -0.12px;
+}
+
+/* ===== Apple Glass Nav ===== */
+
+.nav-glass {
+  background: var(--color-nav-bg);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* ===== Apple Button Variants ===== */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--color-primary);
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 980px;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1;
+  border: none;
+  cursor: pointer;
+  transition: background 200ms ease-in-out, opacity 200ms ease-in-out;
+}
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+}
+.btn-primary:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--color-btn-secondary-bg);
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 980px;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1;
+  border: none;
+  cursor: pointer;
+  transition: opacity 200ms ease-in-out;
+}
+.dark .btn-secondary {
+  color: #1d1d1f;
+}
+.btn-secondary:hover {
+  opacity: 0.85;
+}
+
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: transparent;
+  color: var(--color-link);
+  padding: 6px 16px;
+  border-radius: 980px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+  border: 1px solid var(--color-link);
+  cursor: pointer;
+  transition: background 200ms ease-in-out, color 200ms ease-in-out;
+}
+.btn-pill:hover {
+  background: var(--color-link);
+  color: #ffffff;
+}
+
+/* ===== Apple Input ===== */
+
+.input-apple {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 11px;
+  border: 1px solid var(--color-input-border);
+  background: var(--color-input-bg);
+  color: var(--color-text);
+  font-size: 17px;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  outline: none;
+  transition: border-color 200ms ease-in-out, box-shadow 200ms ease-in-out;
+}
+.input-apple::placeholder {
+  color: var(--color-text-tertiary);
+}
+.input-apple:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2);
+}
+.input-apple:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+/* ===== Apple Card ===== */
+
+.card-apple {
+  background: var(--color-card-bg);
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+/* ===== Spinner ===== */
+
+@keyframes apple-spin {
+  to { transform: rotate(360deg); }
+}
+.spinner-apple {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: apple-spin 0.6s linear infinite;
+}
+
+/* ===== Smooth page transitions ===== */
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
 }

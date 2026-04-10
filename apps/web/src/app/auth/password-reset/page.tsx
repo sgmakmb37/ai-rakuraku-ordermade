@@ -30,9 +30,11 @@ export default function PasswordResetPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) {
-        setError(error.message === "Auth session missing!"
-          ? "リセットリンクの有効期限が切れました。もう一度パスワードリセットを申し込んでください。"
-          : error.message);
+        setError(
+          error.message === "Auth session missing!"
+            ? "リセットリンクの有効期限が切れました。もう一度パスワードリセットを申し込んでください。"
+            : error.message
+        );
       } else {
         setIsComplete(true);
       }
@@ -45,13 +47,35 @@ export default function PasswordResetPage() {
 
   if (isComplete) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50 px-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">パスワード更新完了</h1>
-          <p className="text-gray-600 mb-6">新しいパスワードが設定されました。</p>
+      <div
+        className="min-h-screen flex items-center justify-center px-4 animate-fade-in"
+        style={{ background: "var(--color-bg)" }}
+      >
+        <div className="card-apple w-full text-center" style={{ maxWidth: 480 }}>
+          <h1
+            style={{
+              fontSize: "1.75rem",
+              fontWeight: 400,
+              color: "var(--color-text-primary)",
+              marginBottom: "0.75rem",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            パスワード更新完了
+          </h1>
+          <p
+            className="text-caption"
+            style={{
+              color: "var(--color-text-secondary)",
+              marginBottom: "2rem",
+            }}
+          >
+            新しいパスワードが設定されました。
+          </p>
           <button
             onClick={() => router.push("/dashboard")}
-            className="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+            className="btn-primary"
+            style={{ width: "100%" }}
           >
             ダッシュボードへ
           </button>
@@ -61,40 +85,104 @@ export default function PasswordResetPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50 px-4">
-      <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">新しいパスワード設定</h1>
-        <p className="text-gray-600 mb-6 text-center">新しいパスワードを入力してください。</p>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div
+      className="min-h-screen flex items-center justify-center px-4 animate-fade-in"
+      style={{ background: "var(--color-bg)" }}
+    >
+      <div className="card-apple w-full" style={{ maxWidth: 480 }}>
+        <h1
+          style={{
+            fontSize: "1.75rem",
+            fontWeight: 400,
+            color: "var(--color-text-primary)",
+            marginBottom: "0.5rem",
+            letterSpacing: "-0.02em",
+            textAlign: "center",
+          }}
+        >
+          新しいパスワード設定
+        </h1>
+        <p
+          className="text-caption"
+          style={{
+            color: "var(--color-text-secondary)",
+            textAlign: "center",
+            marginBottom: "2rem",
+          }}
+        >
+          新しいパスワードを入力してください。
+        </p>
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">新しいパスワード</label>
+            <label
+              style={{
+                display: "block",
+                fontSize: "0.8125rem",
+                fontWeight: 500,
+                color: "var(--color-text-primary)",
+                marginBottom: "0.375rem",
+              }}
+            >
+              新しいパスワード
+            </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="6文字以上"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="input-apple"
+              style={{ width: "100%" }}
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">パスワード確認</label>
+            <label
+              style={{
+                display: "block",
+                fontSize: "0.8125rem",
+                fontWeight: 500,
+                color: "var(--color-text-primary)",
+                marginBottom: "0.375rem",
+              }}
+            >
+              パスワード確認
+            </label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="もう一度入力"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="input-apple"
+              style={{ width: "100%" }}
             />
           </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+
+          {error && (
+            <p
+              className="text-caption"
+              style={{ color: "var(--color-error)" }}
+            >
+              {error}
+            </p>
+          )}
+
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors disabled:bg-gray-400"
+            className="btn-primary"
+            style={{ width: "100%", marginTop: "0.5rem", opacity: isLoading ? 0.6 : 1 }}
           >
-            {isLoading ? "更新中..." : "パスワードを更新"}
+            {isLoading ? (
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+                <span className="spinner-apple" />
+                更新中...
+              </span>
+            ) : (
+              "パスワードを更新"
+            )}
           </button>
         </form>
       </div>
