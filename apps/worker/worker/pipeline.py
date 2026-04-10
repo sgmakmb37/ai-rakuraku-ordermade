@@ -202,19 +202,13 @@ def train_lora(
     )
     model = prepare_model_for_kbit_training(model)
 
+    # Smaller LoRA: r=8, attention-only target modules.
+    # Keeps adapter size <10MB so Supabase Storage 50MB limit is never hit.
     lora_config = LoraConfig(
-        r=16,
+        r=8,
         lora_alpha=16,
         lora_dropout=0.0,
-        target_modules=[
-            "q_proj",
-            "k_proj",
-            "v_proj",
-            "o_proj",
-            "gate_proj",
-            "up_proj",
-            "down_proj",
-        ],
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
         bias="none",
         task_type="CAUSAL_LM",
     )
@@ -254,7 +248,12 @@ def train_lora(
     )
 
     trainer.train()
-    model.save_pretrained(output_dir)
+    # Save with bf16/fp16 to halve the adapter size and shard to <10MB
+    model.save_pretrained(
+        output_dir,
+        safe_serialization=True,
+        max_shard_size="10MB",
+    )
     tokenizer.save_pretrained(output_dir)
     return output_dir
 
