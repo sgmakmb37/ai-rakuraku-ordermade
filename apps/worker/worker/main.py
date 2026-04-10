@@ -13,12 +13,16 @@ from worker.pipeline import (
     chunk_text,
     extract_text,
     filter_chunks,
+    quantize_model,
     train_lora,
 )
 
 logger = logging.getLogger(__name__)
 
 RUNPOD_MODE = os.getenv("RUNPOD_MODE", "0") == "1"
+
+# GGUF chunking: 48MB chunks (safety margin under Supabase 50MB file limit)
+GGUF_CHUNK_SIZE = 48 * 1024 * 1024
 
 # Model ID mapping
 MODEL_ID_MAP = {
@@ -27,6 +31,79 @@ MODEL_ID_MAP = {
     "gemma-3n-e2b": "unsloth/gemma-3n-E2B-it",
     "gemma-3n-e4b": "unsloth/gemma-3n-E4B-it",
 }
+
+
+def _shard_and_upload_gguf(supabase, gguf_path: Path, storage_dir: str) -> str:
+    """
+    Split a GGUF file into <50MB chunks and upload to Supabase Storage.
+
+    Writes chunks to `{storage_dir}/gguf/part_{000..N}.bin` and a manifest
+    `{storage_dir}/gguf/manifest.json` describing the assembly order.
+
+    Args:
+        supabase: Supabase client
+        gguf_path: Local path to the GGUF file
+        storage_dir: Base prefix in the `models` bucket
+
+    Returns:
+        Storage path of the uploaded manifest.json
+    """
+    import hashlib
+    import json as _json
+
+    if not gguf_path.exists():
+        raise FileNotFoundError(f"GGUF file not found: {gguf_path}")
+
+    gguf_prefix = f"{storage_dir}/gguf"
+    total_size = gguf_path.stat().st_size
+    sha256 = hashlib.sha256()
+    chunks = []
+    chunk_idx = 0
+
+    with open(gguf_path, "rb") as f:
+        while True:
+            data = f.read(GGUF_CHUNK_SIZE)
+            if not data:
+                break
+            sha256.update(data)
+            chunk_name = f"part_{chunk_idx:04d}.bin"
+            chunk_storage_path = f"{gguf_prefix}/{chunk_name}"
+            try:
+                supabase.storage.from_("models").upload(chunk_storage_path, data)
+            except Exception:
+                # Idempotent retry: remove + re-upload
+                try:
+                    supabase.storage.from_("models").remove([chunk_storage_path])
+                except Exception:
+                    pass
+                supabase.storage.from_("models").upload(chunk_storage_path, data)
+            chunks.append({
+                "index": chunk_idx,
+                "name": chunk_name,
+                "size": len(data),
+            })
+            logger.info(f"[GGUF] uploaded chunk {chunk_idx} ({len(data)} bytes)")
+            chunk_idx += 1
+
+    manifest = {
+        "filename": gguf_path.name,
+        "total_size": total_size,
+        "chunk_size": GGUF_CHUNK_SIZE,
+        "chunks": chunks,
+        "sha256": sha256.hexdigest(),
+    }
+    manifest_bytes = _json.dumps(manifest, indent=2).encode("utf-8")
+    manifest_storage_path = f"{gguf_prefix}/manifest.json"
+    try:
+        supabase.storage.from_("models").upload(manifest_storage_path, manifest_bytes)
+    except Exception:
+        try:
+            supabase.storage.from_("models").remove([manifest_storage_path])
+        except Exception:
+            pass
+        supabase.storage.from_("models").upload(manifest_storage_path, manifest_bytes)
+
+    return manifest_storage_path
 
 
 class WorkerQueue:
@@ -268,7 +345,25 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
                         f"Upload to {file_storage_path} failed: {retry_err}"
                     ) from retry_err
 
-        # 11. Record LoRA artifact (schema: project_id, version, storage_path)
+        # 11. Optional GGUF quantize + shard upload (feature flagged)
+        gguf_manifest_path = None
+        if os.getenv("ENABLE_GGUF_EXPORT", "0") == "1":
+            try:
+                gguf_dir = Path(config.MODEL_CACHE_DIR) / f"gguf_{job_id}"
+                gguf_file = quantize_model(
+                    base_model_id=model_id,
+                    adapter_path=lora_output_dir,
+                    output_path=str(gguf_dir),
+                    quant_type=os.getenv("GGUF_QUANT_TYPE", "q4_k_m"),
+                )
+                gguf_manifest_path = _shard_and_upload_gguf(
+                    supabase, Path(gguf_file), storage_dir
+                )
+                logger.info(f"[GGUF] manifest uploaded: {gguf_manifest_path}")
+            except Exception:
+                logger.exception("[GGUF] export failed, continuing with adapter only")
+
+        # 12. Record LoRA artifact (schema: project_id, version, storage_path [, gguf_manifest_path])
         current_version = 1
         if lora_artifacts_result.data:
             current_version = lora_artifacts_result.data[0].get("version", 0) + 1
@@ -279,6 +374,8 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             "storage_path": primary_storage_path,
             "created_at": datetime.utcnow().isoformat(),
         }
+        if gguf_manifest_path:
+            artifact_record["gguf_manifest_path"] = gguf_manifest_path
         supabase.table("lora_artifacts").insert(artifact_record).execute()
 
         # 12. Update project status

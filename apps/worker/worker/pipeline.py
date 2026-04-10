@@ -269,19 +269,95 @@ def train_lora(
     return output_dir
 
 
-def quantize_model(model_path: str, output_path: str) -> str:
+def quantize_model(
+    base_model_id: str,
+    adapter_path: str,
+    output_path: str,
+    quant_type: str = "q4_k_m",
+) -> str:
     """
-    Quantize model using Unsloth.
+    Merge base model + LoRA adapter, export as GGUF quantized file.
+
+    Steps:
+        1. Load base model in fp16 (no 4bit quant; GGUF requires full weights)
+        2. PeftModel.from_pretrained + merge_and_unload
+        3. save_pretrained to tmpdir
+        4. llama.cpp convert_hf_to_gguf.py → fp16 GGUF
+        5. llama.cpp llama-quantize → {quant_type} GGUF
+        6. Cleanup intermediate files
 
     Args:
-        model_path: Path to model
-        output_path: Output path for quantized model
+        base_model_id: HF base model id (e.g., "Qwen/Qwen2.5-1.5B")
+        adapter_path: Local path to LoRA adapter directory
+        output_path: Destination directory for final .gguf file
+        quant_type: llama.cpp quant preset (q4_k_m, q5_k_m, q8_0, etc.)
 
     Returns:
-        Path to quantized model
-
-    Note: GGUF quantization requires llama.cpp tooling not present in base
-    image. This function is kept for API compatibility but currently
-    returns the input path unchanged. Worker uploads LoRA adapter directly.
+        Path to the final quantized .gguf file
     """
-    return model_path
+    import shutil
+    import subprocess
+    import tempfile
+
+    llama_dir = os.getenv("LLAMA_CPP_DIR", "/opt/llama.cpp")
+    convert_script = Path(llama_dir) / "convert_hf_to_gguf.py"
+    quantize_bin = Path(llama_dir) / "build" / "bin" / "llama-quantize"
+
+    if not convert_script.exists() or not quantize_bin.exists():
+        raise RuntimeError(
+            f"llama.cpp not available at {llama_dir}. "
+            "Ensure Dockerfile cloned and built llama.cpp."
+        )
+
+    Path(output_path).mkdir(parents=True, exist_ok=True)
+
+    with tempfile.TemporaryDirectory(prefix="gguf_merge_") as tmpdir:
+        merged_dir = Path(tmpdir) / "merged"
+        fp16_gguf = Path(tmpdir) / "model_f16.gguf"
+
+        # 1+2+3: Load base in fp16, merge adapter, save as HF format
+        print(f"[GGUF] loading base {base_model_id}", flush=True)
+        base = AutoModelForCausalLM.from_pretrained(
+            base_model_id,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            trust_remote_code=True,
+        )
+        tokenizer = AutoTokenizer.from_pretrained(base_model_id, trust_remote_code=True)
+
+        print(f"[GGUF] applying LoRA from {adapter_path}", flush=True)
+        merged = PeftModel.from_pretrained(base, adapter_path).merge_and_unload()
+        merged.save_pretrained(str(merged_dir), safe_serialization=True)
+        tokenizer.save_pretrained(str(merged_dir))
+        del base, merged
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+
+        # 4: HF -> GGUF f16
+        print(f"[GGUF] converting HF -> GGUF f16", flush=True)
+        subprocess.run(
+            [
+                "python",
+                str(convert_script),
+                str(merged_dir),
+                "--outfile",
+                str(fp16_gguf),
+                "--outtype",
+                "f16",
+            ],
+            check=True,
+        )
+
+        # 5: GGUF f16 -> quantized
+        final_path = Path(output_path) / f"model_{quant_type}.gguf"
+        print(f"[GGUF] quantizing to {quant_type}", flush=True)
+        subprocess.run(
+            [str(quantize_bin), str(fp16_gguf), str(final_path), quant_type],
+            check=True,
+        )
+
+        # shutil cleanup is automatic via TemporaryDirectory
+        _ = shutil  # keep import reachable
+
+    size = final_path.stat().st_size
+    print(f"[GGUF] done: {final_path} ({size} bytes)", flush=True)
+    return str(final_path)

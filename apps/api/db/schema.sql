@@ -195,6 +195,7 @@ create table if not exists lora_artifacts (
   project_id uuid not null references projects(id) on delete cascade,
   version int not null default 1,
   storage_path text not null,
+  gguf_manifest_path text,
   created_at timestamptz not null default now()
 );
 

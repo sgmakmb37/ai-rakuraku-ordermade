@@ -111,15 +111,33 @@ async def reset_project(
     return {"status": "reset"}
 
 
+def _sign_object(supabase: Client, bucket: str, path: str, ttl: int = 3600) -> str:
+    signed = supabase.storage.from_(bucket).create_signed_url(path, ttl)
+    if isinstance(signed, dict):
+        return signed.get("signedURL", "")
+    return signed
+
+
 @router.get("/download")
 async def download_model(
     project_id: str,
+    format: str = "adapter",
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase),
 ):
+    """
+    Download a trained model.
+
+    Query params:
+        format: "adapter" (default) = LoRA adapter bundle
+                "gguf"             = quantized GGUF shards + manifest
+
+    Returns:
+        adapter mode: {download_url, files: [{name, url}], version}
+        gguf    mode: {manifest_url, chunks: [{name, url, index, size}], version, total_size}
+    """
     _get_user_project(supabase, project_id, user["id"])
 
-    # 最新のlora_artifactを取得
     artifacts = (
         supabase.table("lora_artifacts")
         .select("*")
@@ -133,39 +151,8 @@ async def download_model(
 
     artifact = artifacts.data[0]
     storage_path = artifact["storage_path"]
-    # Parent prefix = "projects/{pid}/{jid}"
     parent_prefix = "/".join(storage_path.split("/")[:-1]) if "/" in storage_path else ""
 
-    files = []
-    if parent_prefix:
-        try:
-            listing = supabase.storage.from_("models").list(parent_prefix) or []
-            for entry in listing:
-                name = entry.get("name") if isinstance(entry, dict) else None
-                if not name or name.startswith("checkpoint-"):
-                    continue  # skip trainer intermediate checkpoints
-                remote_path = f"{parent_prefix}/{name}"
-                signed = supabase.storage.from_("models").create_signed_url(
-                    remote_path, 3600
-                )
-                signed_url = signed.get("signedURL") if isinstance(signed, dict) else signed
-                files.append({"name": name, "url": signed_url})
-        except Exception as e:
-            logger.warning("Failed to list LoRA bundle: %s", e)
-
-    # Always include the primary file; fallback if listing failed
-    if not files:
-        primary = supabase.storage.from_("models").create_signed_url(storage_path, 3600)
-        primary_url = primary.get("signedURL") if isinstance(primary, dict) else primary
-        files = [
-            {"name": storage_path.rsplit("/", 1)[-1], "url": primary_url}
-        ]
-
-    # Primary signed URL for single-file downloads (backward compat)
-    primary = supabase.storage.from_("models").create_signed_url(storage_path, 3600)
-    primary_url = primary.get("signedURL") if isinstance(primary, dict) else primary
-
-    # last_action_atとexpires_at更新
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(days=30)
     supabase.table("projects").update({
@@ -173,9 +160,67 @@ async def download_model(
         "expires_at": expires_at.isoformat(),
     }).eq("id", project_id).execute()
 
+    # GGUF mode: return manifest + chunk signed URLs
+    if format == "gguf":
+        gguf_manifest_path = artifact.get("gguf_manifest_path")
+        if not gguf_manifest_path:
+            raise HTTPException(
+                status_code=404,
+                detail="GGUF export not available for this artifact",
+            )
+        try:
+            manifest_bytes = supabase.storage.from_("models").download(gguf_manifest_path)
+            import json as _json
+            manifest = _json.loads(manifest_bytes.decode("utf-8"))
+        except Exception:
+            logger.exception("Failed to read GGUF manifest")
+            raise HTTPException(status_code=500, detail="Manifest read error")
+
+        gguf_prefix = "/".join(gguf_manifest_path.split("/")[:-1])
+        chunks_with_urls = []
+        for chunk in manifest.get("chunks", []):
+            chunk_path = f"{gguf_prefix}/{chunk['name']}"
+            chunks_with_urls.append({
+                "index": chunk.get("index"),
+                "name": chunk.get("name"),
+                "size": chunk.get("size"),
+                "url": _sign_object(supabase, "models", chunk_path),
+            })
+        return {
+            "manifest_url": _sign_object(supabase, "models", gguf_manifest_path),
+            "filename": manifest.get("filename"),
+            "total_size": manifest.get("total_size"),
+            "sha256": manifest.get("sha256"),
+            "chunks": chunks_with_urls,
+            "version": artifact.get("version", 1),
+        }
+
+    # Adapter mode (default): return bundle
+    files = []
+    if parent_prefix:
+        try:
+            listing = supabase.storage.from_("models").list(parent_prefix) or []
+            for entry in listing:
+                name = entry.get("name") if isinstance(entry, dict) else None
+                if not name or name.startswith("checkpoint-") or name == "gguf":
+                    continue
+                remote_path = f"{parent_prefix}/{name}"
+                files.append({
+                    "name": name,
+                    "url": _sign_object(supabase, "models", remote_path),
+                })
+        except Exception as e:
+            logger.warning("Failed to list LoRA bundle: %s", e)
+
+    if not files:
+        files = [{
+            "name": storage_path.rsplit("/", 1)[-1],
+            "url": _sign_object(supabase, "models", storage_path),
+        }]
+
     return {
-        "download_url": primary_url,  # backward compat for current FE
-        "files": files,  # full bundle (adapter_config.json, tokenizer, etc.)
+        "download_url": _sign_object(supabase, "models", storage_path),
+        "files": files,
         "version": artifact.get("version", 1),
     }
 
