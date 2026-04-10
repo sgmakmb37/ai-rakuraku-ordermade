@@ -94,9 +94,15 @@ export default function NewProjectPage() {
         files: newFiles,
       });
 
-      // ファイル内容を並列で読み取る
+      // Only read text-based files client-side; PDFs are uploaded to API for pymupdf extraction
       const readPromises = validFiles.map((file) =>
         new Promise<FileContent>((resolve) => {
+          const ext = file.name.split(".").pop()?.toLowerCase();
+          if (ext === "pdf") {
+            // PDF: placeholder content, real extraction on server
+            resolve({ name: file.name, content: "" });
+            return;
+          }
           const reader = new FileReader();
           reader.onload = (event) => {
             resolve({ name: file.name, content: event.target?.result as string });
@@ -107,7 +113,12 @@ export default function NewProjectPage() {
       const newContents = await Promise.all(readPromises);
       setFileContents((prev) => {
         const updated = [...prev, ...newContents];
-        setCharCount(updated.reduce((acc, fc) => acc + fc.content.length, 0));
+        // Count chars for text files; PDFs estimated as size/3
+        const textChars = updated.reduce((acc, fc) => acc + fc.content.length, 0);
+        const pdfEstimate = newFiles
+          .filter((f) => f.name.toLowerCase().endsWith(".pdf"))
+          .reduce((acc, f) => acc + Math.floor(f.size / 3), 0);
+        setCharCount(textChars + pdfEstimate);
         return updated;
       });
     }
@@ -151,6 +162,7 @@ export default function NewProjectPage() {
       });
 
       // URL + ファイルのデータソースを並列追加
+      // PDF は multipart で API 側抽出、それ以外は client 側抽出済み content を POST
       const sourcePromises: Promise<unknown>[] = [];
       for (const url of formData.urls) {
         sourcePromises.push(api.addSource(project.id, {
@@ -160,13 +172,19 @@ export default function NewProjectPage() {
         }));
       }
       for (let i = 0; i < formData.files.length; i++) {
-        const fileContent = fileContents[i];
-        if (fileContent) {
-          sourcePromises.push(api.addSource(project.id, {
-            type: "file",
-            name: fileContent.name,
-            content: fileContent.content,
-          }));
+        const file = formData.files[i];
+        const ext = file.name.split(".").pop()?.toLowerCase();
+        if (ext === "pdf") {
+          sourcePromises.push(api.addSourceFile(project.id, file));
+        } else {
+          const fileContent = fileContents[i];
+          if (fileContent && fileContent.content) {
+            sourcePromises.push(api.addSource(project.id, {
+              type: "file",
+              name: fileContent.name,
+              content: fileContent.content,
+            }));
+          }
         }
       }
       await Promise.all(sourcePromises);

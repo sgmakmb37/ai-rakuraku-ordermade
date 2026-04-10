@@ -168,9 +168,8 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
         if not filtered_chunks:
             raise ValueError("No valid chunks after filtering")
 
-        # 7. Get existing LoRA artifact if available
-        # TODO: Phase 2 — download previous artifact to local path for resume.
-        # For now, always start fresh to avoid storage-path/local-path mismatch.
+        # 7. Get existing LoRA artifact if available, and download its files
+        # to local path so PeftModel.from_pretrained can load them for resume.
         existing_lora_path = None
         lora_artifacts_result = (
             supabase.table("lora_artifacts")
@@ -180,6 +179,37 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             .limit(1)
             .execute()
         )
+        if lora_artifacts_result.data:
+            latest = lora_artifacts_result.data[0]
+            storage_path = latest.get("storage_path", "")
+            # parent dir = "projects/{pid}/{old_jid}"
+            parent_prefix = "/".join(storage_path.split("/")[:-1]) if "/" in storage_path else ""
+            if parent_prefix:
+                try:
+                    resume_dir = Path(config.MODEL_CACHE_DIR) / f"resume_{job_id}"
+                    resume_dir.mkdir(parents=True, exist_ok=True)
+                    files_in_prefix = supabase.storage.from_("models").list(parent_prefix)
+                    for entry in files_in_prefix or []:
+                        fname = entry.get("name") if isinstance(entry, dict) else None
+                        if not fname:
+                            continue
+                        remote_path = f"{parent_prefix}/{fname}"
+                        try:
+                            blob = supabase.storage.from_("models").download(remote_path)
+                            (resume_dir / fname).write_bytes(blob)
+                            logger.info(f"[RESUME] downloaded {remote_path} ({len(blob)} bytes)")
+                        except Exception as dl_err:
+                            logger.warning(f"[RESUME] skip {remote_path}: {dl_err}")
+                    # Require at least adapter_config.json for a valid resume
+                    if (resume_dir / "adapter_config.json").exists():
+                        existing_lora_path = str(resume_dir)
+                        logger.info(f"[RESUME] will continue from {existing_lora_path}")
+                    else:
+                        logger.warning(
+                            f"[RESUME] adapter_config.json missing in {resume_dir}, training fresh"
+                        )
+                except Exception:
+                    logger.exception("[RESUME] failed to prepare resume dir, training fresh")
 
         # 8. Train LoRA
         lora_output_dir = str(Path(config.MODEL_CACHE_DIR) / f"lora_{job_id}")

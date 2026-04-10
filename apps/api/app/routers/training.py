@@ -120,17 +120,50 @@ async def download_model(
     _get_user_project(supabase, project_id, user["id"])
 
     # 最新のlora_artifactを取得
-    artifacts = supabase.table("lora_artifacts").select("*").eq("project_id", project_id).order("created_at", desc=True).limit(1).execute()
+    artifacts = (
+        supabase.table("lora_artifacts")
+        .select("*")
+        .eq("project_id", project_id)
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
     if not artifacts.data:
         raise HTTPException(status_code=404, detail="No model available for download")
 
     artifact = artifacts.data[0]
+    storage_path = artifact["storage_path"]
+    # Parent prefix = "projects/{pid}/{jid}"
+    parent_prefix = "/".join(storage_path.split("/")[:-1]) if "/" in storage_path else ""
 
-    # Supabase Storageからsigned URLを生成して返す
-    signed_url = supabase.storage.from_("models").create_signed_url(
-        artifact["storage_path"],
-        3600  # 1時間有効
-    )
+    files = []
+    if parent_prefix:
+        try:
+            listing = supabase.storage.from_("models").list(parent_prefix) or []
+            for entry in listing:
+                name = entry.get("name") if isinstance(entry, dict) else None
+                if not name or name.startswith("checkpoint-"):
+                    continue  # skip trainer intermediate checkpoints
+                remote_path = f"{parent_prefix}/{name}"
+                signed = supabase.storage.from_("models").create_signed_url(
+                    remote_path, 3600
+                )
+                signed_url = signed.get("signedURL") if isinstance(signed, dict) else signed
+                files.append({"name": name, "url": signed_url})
+        except Exception as e:
+            logger.warning("Failed to list LoRA bundle: %s", e)
+
+    # Always include the primary file; fallback if listing failed
+    if not files:
+        primary = supabase.storage.from_("models").create_signed_url(storage_path, 3600)
+        primary_url = primary.get("signedURL") if isinstance(primary, dict) else primary
+        files = [
+            {"name": storage_path.rsplit("/", 1)[-1], "url": primary_url}
+        ]
+
+    # Primary signed URL for single-file downloads (backward compat)
+    primary = supabase.storage.from_("models").create_signed_url(storage_path, 3600)
+    primary_url = primary.get("signedURL") if isinstance(primary, dict) else primary
 
     # last_action_atとexpires_at更新
     now = datetime.now(timezone.utc)
@@ -140,7 +173,11 @@ async def download_model(
         "expires_at": expires_at.isoformat(),
     }).eq("id", project_id).execute()
 
-    return {"download_url": signed_url}
+    return {
+        "download_url": primary_url,  # backward compat for current FE
+        "files": files,  # full bundle (adapter_config.json, tokenizer, etc.)
+        "version": artifact.get("version", 1),
+    }
 
 
 @router.get("/history")

@@ -204,19 +204,24 @@ def train_lora(
     model = prepare_model_for_kbit_training(model)
 
     # Smaller LoRA: r=8, attention-only target modules.
-    # Keeps adapter size <10MB so Supabase Storage 50MB limit is never hit.
-    lora_config = LoraConfig(
-        r=8,
-        lora_alpha=16,
-        lora_dropout=0.0,
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-        bias="none",
-        task_type="CAUSAL_LM",
-    )
-    model = get_peft_model(model, lora_config)
-
+    # Keeps adapter size <15MB so Supabase Storage 50MB limit is never hit.
     if existing_lora_path:
-        model = PeftModel.from_pretrained(model, existing_lora_path)
+        # Resume: load previous adapter directly onto base model.
+        # Do NOT call get_peft_model first — PeftModel.from_pretrained handles wrapping.
+        print(f"[RESUME] loading existing LoRA adapter from {existing_lora_path}", flush=True)
+        model = PeftModel.from_pretrained(
+            model, existing_lora_path, is_trainable=True
+        )
+    else:
+        lora_config = LoraConfig(
+            r=8,
+            lora_alpha=16,
+            lora_dropout=0.0,
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
+        model = get_peft_model(model, lora_config)
 
     dataset = Dataset.from_dict({"text": train_texts})
 

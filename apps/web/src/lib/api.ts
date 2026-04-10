@@ -23,6 +23,28 @@ async function fetchAPI(path: string, options: RequestInit = {}) {
   return res.json();
 }
 
+async function fetchMultipart(path: string, formData: FormData) {
+  const { createClient } = await import("@/lib/supabase/client");
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: {
+      // Do NOT set Content-Type — browser will set with correct boundary
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Unknown error" }));
+    throw new Error(error.detail || `API error: ${res.status}`);
+  }
+
+  return res.json();
+}
+
 export const api = {
   // Projects
   listProjects: () => fetchAPI("/projects"),
@@ -34,6 +56,11 @@ export const api = {
   // Sources
   addSource: (projectId: string, data: { type: string; name: string; content: string }) =>
     fetchAPI(`/projects/${projectId}/sources`, { method: "POST", body: JSON.stringify(data) }),
+  addSourceFile: (projectId: string, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return fetchMultipart(`/projects/${projectId}/sources/file`, form);
+  },
   deleteSource: (projectId: string, sourceId: string) =>
     fetchAPI(`/projects/${projectId}/sources/${sourceId}`, { method: "DELETE" }),
 
