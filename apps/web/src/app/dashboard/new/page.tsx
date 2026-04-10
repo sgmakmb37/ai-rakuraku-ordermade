@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
 type Step = 1 | 2 | 3 | 4;
@@ -111,26 +111,26 @@ export default function NewProjectPage() {
         })
       );
       const newContents = await Promise.all(readPromises);
-      setFileContents((prev) => {
-        const updated = [...prev, ...newContents];
-        // Count chars for text files; PDFs estimated as size/3
-        const textChars = updated.reduce((acc, fc) => acc + fc.content.length, 0);
-        const pdfEstimate = newFiles
-          .filter((f) => f.name.toLowerCase().endsWith(".pdf"))
-          .reduce((acc, f) => acc + Math.floor(f.size / 3), 0);
-        setCharCount(textChars + pdfEstimate);
-        return updated;
-      });
+      setFileContents((prev) => [...prev, ...newContents]);
     }
   };
+
+  // Derived char count: recompute from current state so multi-upload and
+  // PDF removal stay consistent (avoids stale-closure regressions).
+  useEffect(() => {
+    const textChars = fileContents.reduce((acc, fc) => acc + fc.content.length, 0);
+    const pdfEstimate = formData.files
+      .filter((f) => f.name.toLowerCase().endsWith(".pdf"))
+      .reduce((acc, f) => acc + Math.floor(f.size / 3), 0);
+    setCharCount(textChars + pdfEstimate);
+  }, [formData.files, fileContents]);
 
   const handleRemoveFile = (index: number) => {
     const newFiles = formData.files.filter((_, i) => i !== index);
     const newFileContents = fileContents.filter((_, i) => i !== index);
     setFormData({ ...formData, files: newFiles });
     setFileContents(newFileContents);
-    const totalChars = newFileContents.reduce((acc, fc) => acc + fc.content.length, 0);
-    setCharCount(totalChars);
+    // charCount is recomputed via the derived useEffect above
   };
 
   const handleNext = () => {

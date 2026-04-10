@@ -166,8 +166,11 @@ def main() -> int:
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    print(f"[INFO] loading base model {args.model_id}")
+    # Load base only, run all prompts, unload, then load tuned.
+    # Avoids holding two full base models in VRAM simultaneously.
     dtype = torch.float16 if args.device != "cpu" else torch.float32
+
+    print(f"[INFO] loading base model {args.model_id}")
     base_model = AutoModelForCausalLM.from_pretrained(
         args.model_id,
         torch_dtype=dtype,
@@ -176,32 +179,42 @@ def main() -> int:
     )
     base_model.eval()
 
-    print(f"[INFO] loading adapter {adapter_path}")
-    tuned_model = PeftModel.from_pretrained(
-        AutoModelForCausalLM.from_pretrained(
-            args.model_id,
-            torch_dtype=dtype,
-            device_map=device_map,
-            trust_remote_code=True,
-        ),
-        str(adapter_path),
+    base_outputs: list[str] = []
+    for i, prompt in enumerate(prompts, start=1):
+        print(f"[INFO] [base {i}/{len(prompts)}] generating...")
+        base_outputs.append(generate(base_model, tokenizer, prompt, args.max_new_tokens))
+
+    # Free base model VRAM before loading tuned
+    del base_model
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    print(f"[INFO] loading base again + adapter {adapter_path}")
+    tuned_base = AutoModelForCausalLM.from_pretrained(
+        args.model_id,
+        torch_dtype=dtype,
+        device_map=device_map,
+        trust_remote_code=True,
     )
+    tuned_model = PeftModel.from_pretrained(tuned_base, str(adapter_path))
     tuned_model.eval()
 
     results = []
     for i, prompt in enumerate(prompts, start=1):
-        print(f"[INFO] [{i}/{len(prompts)}] generating base...")
-        base_out = generate(base_model, tokenizer, prompt, args.max_new_tokens)
-        print(f"[INFO] [{i}/{len(prompts)}] generating tuned...")
+        print(f"[INFO] [tuned {i}/{len(prompts)}] generating...")
         tuned_out = generate(tuned_model, tokenizer, prompt, args.max_new_tokens)
         results.append(
             {
                 "prompt": prompt,
-                "base": base_out,
+                "base": base_outputs[i - 1],
                 "tuned": tuned_out,
-                "diff": inline_diff(base_out, tuned_out),
+                "diff": inline_diff(base_outputs[i - 1], tuned_out),
             }
         )
+
+    del tuned_model, tuned_base
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(

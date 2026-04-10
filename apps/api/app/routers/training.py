@@ -153,14 +153,8 @@ async def download_model(
     storage_path = artifact["storage_path"]
     parent_prefix = "/".join(storage_path.split("/")[:-1]) if "/" in storage_path else ""
 
-    now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(days=30)
-    supabase.table("projects").update({
-        "last_action_at": now.isoformat(),
-        "expires_at": expires_at.isoformat(),
-    }).eq("id", project_id).execute()
-
-    # GGUF mode: return manifest + chunk signed URLs
+    # GGUF mode: return manifest + chunk signed URLs.
+    # Check availability BEFORE updating activity so 404 doesn't extend expiry.
     if format == "gguf":
         gguf_manifest_path = artifact.get("gguf_manifest_path")
         if not gguf_manifest_path:
@@ -168,6 +162,16 @@ async def download_model(
                 status_code=404,
                 detail="GGUF export not available for this artifact",
             )
+
+    # Update project activity (only reached when download is actually served)
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(days=30)
+    supabase.table("projects").update({
+        "last_action_at": now.isoformat(),
+        "expires_at": expires_at.isoformat(),
+    }).eq("id", project_id).execute()
+
+    if format == "gguf":
         try:
             manifest_bytes = supabase.storage.from_("models").download(gguf_manifest_path)
             import json as _json
