@@ -7,6 +7,9 @@ import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { getStatusBadgeColor, getStatusLabel, type ProjectStatus } from "@/lib/status-utils";
+import { Nav } from "@/components/nav";
+import { Spinner } from "@/components/spinner";
+import { Plus } from "lucide-react";
 
 interface Project {
   id: string;
@@ -87,49 +90,7 @@ export default function DashboardPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--color-bg)" }}>
       {/* Nav */}
-      <nav
-        className="nav-glass"
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          height: 48,
-          display: "flex",
-          alignItems: "center",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 980,
-            margin: "0 auto",
-            width: "100%",
-            padding: "0 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text)" }}>
-            AIらくらくオーダーメイド
-          </span>
-          <button
-            onClick={handleLogout}
-            disabled={isLogoutLoading}
-            className="text-caption"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: isLogoutLoading ? "not-allowed" : "pointer",
-              color: "var(--color-text-tertiary)",
-              opacity: isLogoutLoading ? 0.5 : 1,
-              padding: 0,
-            }}
-          >
-            {isLogoutLoading ? "ログアウト中..." : "ログアウト"}
-          </button>
-        </div>
-      </nav>
+      <Nav left="brand" onLogout={handleLogout} isLogoutLoading={isLogoutLoading} />
 
       {/* Main */}
       <main
@@ -155,17 +116,14 @@ export default function DashboardPage() {
             className="btn-primary"
             style={!canCreateNewProject ? { opacity: 0.42, cursor: "not-allowed" } : undefined}
           >
-            {canCreateNewProject ? "新規作成" : "上限に達しています"}
+            {canCreateNewProject ? <><Plus size={18} />新規作成</> : "上限に達しています"}
           </button>
         </div>
 
         {/* States */}
         {isLoading ? (
           <div style={{ display: "flex", justifyContent: "center", padding: "64px 0" }}>
-            <div
-              className="spinner-apple"
-              style={{ borderColor: "rgba(0,0,0,0.15)", borderTopColor: "var(--color-primary)" }}
-            />
+            <Spinner size={24} />
           </div>
         ) : error ? (
           <div style={{ textAlign: "center", padding: "64px 0" }}>

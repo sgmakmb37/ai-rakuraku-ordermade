@@ -4,6 +4,10 @@ import { useRouter, useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { getStatusBadgeColor, getStatusLabel, type ProjectStatus } from "@/lib/status-utils";
+import { Nav } from "@/components/nav";
+import { PageSpinner } from "@/components/spinner";
+import { ErrorAlert } from "@/components/error-alert";
+import { BookOpen, RotateCcw, Download } from "lucide-react";
 
 interface ProjectDetail {
   id: string;
@@ -153,22 +157,7 @@ export default function ProjectDetailPage() {
   };
 
   if (isLoading) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "var(--color-bg)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div
-          className="spinner-apple"
-          style={{ borderColor: "rgba(0,0,0,0.15)", borderTopColor: "var(--color-primary)" }}
-        />
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   if (error || !project) {
@@ -197,56 +186,7 @@ export default function ProjectDetailPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--color-bg)" }}>
       {/* Nav */}
-      <nav
-        className="nav-glass"
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          height: 48,
-          display: "flex",
-          alignItems: "center",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 980,
-            margin: "0 auto",
-            width: "100%",
-            padding: "0 24px",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="text-caption"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--color-link)",
-              padding: 0,
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-            }}
-          >
-            ← 戻る
-          </button>
-          <span
-            className="text-caption"
-            style={{
-              marginLeft: "auto",
-              color: "var(--color-text-secondary)",
-              fontWeight: 500,
-            }}
-          >
-            {project.name}
-          </span>
-        </div>
-      </nav>
+      <Nav left="back" rightLabel={project.name} />
 
       {/* Main */}
       <main
@@ -357,7 +297,7 @@ export default function ProjectDetailPage() {
             disabled={isActionLoading}
             className="btn-primary"
           >
-            {isActionLoading ? "処理中..." : "追加学習"}
+            {isActionLoading ? "処理中..." : <><BookOpen size={18} />追加学習</>}
           </button>
           <button
             onClick={handleReset}
@@ -370,14 +310,14 @@ export default function ProjectDetailPage() {
               cursor: isActionLoading ? "not-allowed" : "pointer",
             }}
           >
-            {isActionLoading ? "処理中..." : "リセット"}
+            {isActionLoading ? "処理中..." : <><RotateCcw size={18} />リセット</>}
           </button>
           <button
             onClick={handleDownload}
             disabled={isActionLoading}
             className="btn-secondary"
           >
-            {isActionLoading ? "処理中..." : "ダウンロード"}
+            {isActionLoading ? "処理中..." : <><Download size={18} />ダウンロード</>}
           </button>
         </div>
 

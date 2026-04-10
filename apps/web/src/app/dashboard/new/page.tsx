@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { Nav } from "@/components/nav";
+import { Spinner } from "@/components/spinner";
+import { ChevronLeft, Plus, X, Upload, FileText } from "lucide-react";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -239,11 +242,14 @@ export default function NewProjectPage() {
               color: "var(--color-link)",
               fontSize: "0.875rem",
               textDecoration: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
             onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
           >
-            ← ダッシュボードに戻る
+            <ChevronLeft size={16} /><span>ダッシュボードに戻る</span>
           </button>
         </div>
 
@@ -497,7 +503,7 @@ export default function NewProjectPage() {
                         cursor: !newUrl.trim() || formData.urls.length >= 5 ? "not-allowed" : "pointer",
                       }}
                     >
-                      追加
+                      <Plus size={14} />追加
                     </button>
                   </div>
                   {formData.urls.length > 0 && (
@@ -540,7 +546,7 @@ export default function NewProjectPage() {
                               flexShrink: 0,
                             }}
                           >
-                            削除
+                            <X size={14} />削除
                           </button>
                         </li>
                       ))}
@@ -586,6 +592,7 @@ export default function NewProjectPage() {
                       id="fileInput"
                     />
                     <label htmlFor="fileInput" style={{ cursor: "pointer", display: "block" }}>
+                      <Upload size={20} style={{ color: "var(--color-text-tertiary)", marginBottom: 8 }} />
                       <p
                         style={{
                           fontSize: "0.875rem",
@@ -642,7 +649,7 @@ export default function NewProjectPage() {
                               marginLeft: "0.75rem",
                             }}
                           >
-                            削除
+                            <X size={14} />削除
                           </button>
                         </li>
                       ))}

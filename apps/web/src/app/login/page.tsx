@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ErrorAlert } from "@/components/error-alert";
 
 type AuthView = "login" | "signup" | "verify" | "forgot";
 
@@ -299,18 +300,7 @@ export default function LoginPage() {
                 />
               </div>
 
-              {error && (
-                <div
-                  style={{
-                    padding: "12px",
-                    borderRadius: "8px",
-                    background: "rgba(255, 59, 48, 0.1)",
-                    color: "var(--color-error)",
-                  }}
-                >
-                  <p style={{ fontSize: "14px", margin: 0 }}>{error}</p>
-                </div>
-              )}
+              <ErrorAlert message={error} />
 
               <button
                 type="submit"
@@ -320,7 +310,7 @@ export default function LoginPage() {
               >
                 {isLoading ? (
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                    <span className="spinner-apple" />
+                    <span className="spinner-apple" style={{ width: 16, height: 16, borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }} />
                     ログイン中...
                   </span>
                 ) : (
@@ -459,18 +449,7 @@ export default function LoginPage() {
                 />
               </div>
 
-              {error && (
-                <div
-                  style={{
-                    padding: "12px",
-                    borderRadius: "8px",
-                    background: "rgba(255, 59, 48, 0.1)",
-                    color: "var(--color-error)",
-                  }}
-                >
-                  <p style={{ fontSize: "14px", margin: 0 }}>{error}</p>
-                </div>
-              )}
+              <ErrorAlert message={error} />
 
               <button
                 type="submit"
@@ -480,7 +459,7 @@ export default function LoginPage() {
               >
                 {isLoading ? (
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                    <span className="spinner-apple" />
+                    <span className="spinner-apple" style={{ width: 16, height: 16, borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }} />
                     作成中...
                   </span>
                 ) : (
@@ -579,18 +558,7 @@ export default function LoginPage() {
                 ))}
               </div>
 
-              {error && (
-                <div
-                  style={{
-                    padding: "12px",
-                    borderRadius: "8px",
-                    background: "rgba(255, 59, 48, 0.1)",
-                    color: "var(--color-error)",
-                  }}
-                >
-                  <p style={{ fontSize: "14px", margin: 0 }}>{error}</p>
-                </div>
-              )}
+              <ErrorAlert message={error} />
 
               <button
                 type="submit"
@@ -600,7 +568,7 @@ export default function LoginPage() {
               >
                 {isLoading ? (
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                    <span className="spinner-apple" />
+                    <span className="spinner-apple" style={{ width: 16, height: 16, borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }} />
                     確認中...
                   </span>
                 ) : (
@@ -681,18 +649,7 @@ export default function LoginPage() {
                 />
               </div>
 
-              {error && (
-                <div
-                  style={{
-                    padding: "12px",
-                    borderRadius: "8px",
-                    background: "rgba(255, 59, 48, 0.1)",
-                    color: "var(--color-error)",
-                  }}
-                >
-                  <p style={{ fontSize: "14px", margin: 0 }}>{error}</p>
-                </div>
-              )}
+              <ErrorAlert message={error} />
 
               <button
                 type="submit"
@@ -702,7 +659,7 @@ export default function LoginPage() {
               >
                 {isLoading ? (
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                    <span className="spinner-apple" />
+                    <span className="spinner-apple" style={{ width: 16, height: 16, borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }} />
                     送信中...
                   </span>
                 ) : (

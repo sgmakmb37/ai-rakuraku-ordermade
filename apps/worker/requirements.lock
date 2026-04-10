@@ -1,0 +1,24 @@
+# Auto-generated lock file for reproducible builds.
+# Base image: runpod/pytorch:1.0.3-cu1281-torch260-ubuntu2204
+# torch 2.6.0 + CUDA 12.8 pre-installed in base image.
+#
+# Regenerate: docker run --rm <image> pip freeze > requirements.lock
+# Last verified: 2026-04-10 (commit d20b4c8 E2E success)
+#
+# Core ML stack — pinned to exact versions
+trl==0.18.2
+transformers==4.53.0
+peft==0.17.0
+accelerate==1.6.0
+bitsandbytes==0.45.5
+datasets==3.4.1
+sentencepiece==0.2.0
+protobuf==4.25.6
+# GGUF conversion
+gguf==0.9.1
+# Infrastructure
+redis==5.2.1
+supabase==2.11.0
+trafilatura==1.12.2
+pymupdf==1.25.3
+runpod==1.7.7

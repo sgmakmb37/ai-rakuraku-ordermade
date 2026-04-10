@@ -26,8 +26,9 @@ RUN git clone --depth 1 --branch ${LLAMA_CPP_REF} https://github.com/ggerganov/l
 ENV LLAMA_CPP_DIR=/opt/llama.cpp
 ENV PATH="/opt/llama.cpp/build/bin:${PATH}"
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Use lock file for reproducible builds; fall back to requirements.txt
+COPY requirements.lock requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.lock || pip install --no-cache-dir -r requirements.txt
 
 # Cache bust: per-commit SHA to force COPY layer invalidation
 ARG BUILD_SHA=unknown
