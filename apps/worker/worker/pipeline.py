@@ -163,8 +163,9 @@ def train_lora(
     """
     is_gemma = "gemma" in model_id.lower()
 
-    # Model-family-specific compute dtype and quantization
-    compute_dtype = torch.bfloat16 if is_gemma else torch.float16
+    # Model-family-specific compute dtype: Gemma prefers bf16, fallback to fp16
+    gpu_supports_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
+    compute_dtype = torch.bfloat16 if (is_gemma and gpu_supports_bf16) else torch.float16
     quant_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
@@ -240,7 +241,7 @@ def train_lora(
 
     # Model-family-specific training hyperparameters
     if is_gemma:
-        batch_size, lr, use_bf16 = 1, 5e-5, True
+        batch_size, lr, use_bf16 = 1, 5e-5, gpu_supports_bf16
     else:
         batch_size, lr, use_bf16 = 2, 2e-4, False
 
