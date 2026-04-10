@@ -64,8 +64,8 @@ export default function DashboardPage() {
     try {
       await supabase.auth.signOut();
       router.push("/login");
-    } catch (error) {
-      console.error("ログアウトエラー:", error);
+    } catch {
+      // signOut failure is non-critical; redirect anyway
     } finally {
       setIsLogoutLoading(false);
     }

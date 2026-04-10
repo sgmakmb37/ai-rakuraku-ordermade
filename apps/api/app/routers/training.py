@@ -1,15 +1,11 @@
-import json
 import logging
-import uuid
 from datetime import datetime, timedelta, timezone
 
-import httpx
-import redis
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 
-from app.config import settings
-from app.deps import get_supabase, get_current_user, get_redis
+from app.deps import get_supabase, get_current_user
+from app.services.training_jobs import check_active_job, create_training_job, submit_job
 
 logger = logging.getLogger(__name__)
 
@@ -42,48 +38,37 @@ async def start_training(
 ):
     _get_user_project(supabase, project_id, user["id"])
 
+    # 二重job作成防止: queued/running状態のjobが既にあれば409
+    active = check_active_job(supabase, project_id)
+    if active:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Training already in progress (job {active['id']})",
+        )
+
+    # 決済チェック: このprojectに紐づくcompleted paymentが存在するか確認
+    payments = (
+        supabase.table("payments")
+        .select("id")
+        .eq("project_id", project_id)
+        .eq("status", "completed")
+        .limit(1)
+        .execute()
+    )
+    if not payments.data:
+        raise HTTPException(status_code=402, detail="Payment required")
+
     # ステータスをtrainingに更新
     supabase.table("projects").update({"status": "training"}).eq("id", project_id).execute()
 
-    # training_jobsにqueued状態で作成
-    job_id = str(uuid.uuid4())
-    supabase.table("training_jobs").insert({
-        "id": job_id,
-        "project_id": project_id,
-        "status": "queued",
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }).execute()
+    job_id = create_training_job(supabase, project_id)
 
-    # ジョブ投入: RunPod Serverless or Redis
-    if settings.runpod_endpoint_id and settings.runpod_api_key:
-        # RunPod Serverless API経由
-        try:
-            async with httpx.AsyncClient() as client:
-                resp = await client.post(
-                    f"https://api.runpod.ai/v2/{settings.runpod_endpoint_id}/run",
-                    headers={"Authorization": f"Bearer {settings.runpod_api_key}"},
-                    json={"input": {"job_id": job_id, "project_id": project_id}},
-                    timeout=30.0,
-                )
-                resp.raise_for_status()
-        except Exception:
-            logger.exception("Failed to submit RunPod job %s", job_id)
-            supabase.table("training_jobs").update(
-                {"status": "failed", "error_message": "RunPod API error"}
-            ).eq("id", job_id).execute()
-            raise HTTPException(status_code=502, detail="RunPod API error")
-    else:
-        # Redisキューにジョブ投入
-        try:
-            redis_client = get_redis()
-            queue_data = json.dumps({"job_id": job_id, "project_id": project_id})
-            redis_client.rpush("training_jobs", queue_data)
-        except redis.RedisError:
-            logger.exception("Failed to enqueue training job %s", job_id)
-            supabase.table("training_jobs").update(
-                {"status": "failed", "error_message": "Queue error"}
-            ).eq("id", job_id).execute()
-            raise HTTPException(status_code=502, detail="Queue service error")
+    try:
+        await submit_job(supabase, job_id, project_id)
+    except HTTPException:
+        # submit失敗時: projectステータスをロールバック
+        supabase.table("projects").update({"status": "created"}).eq("id", project_id).execute()
+        raise
 
     return {"job_id": job_id, "status": "queued"}
 

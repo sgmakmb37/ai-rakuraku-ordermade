@@ -37,17 +37,17 @@ def extract_text(source_type: str, source: str) -> str:
         return text or ""
 
     # source_type == "file"
-    path = Path(source)
+    path = Path(source).resolve()
 
     if path.suffix.lower() == ".pdf":
-        doc = pymupdf.open(source)
-        text = ""
-        for page in doc:
-            text += page.get_text()
-        return text
+        with pymupdf.open(str(path)) as doc:
+            text = ""
+            for page in doc:
+                text += page.get_text()
+            return text
 
     # .txt, .csv, .json or other text formats
-    with open(source, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
 
@@ -161,6 +161,14 @@ def train_lora(
     Returns:
         Path to trained adapter
     """
+    # model_id のホワイトリスト検証（MODEL_ID_MAP値のみ許可）
+    ALLOWED_MODELS = {
+        "Qwen/Qwen2.5-1.5B", "Qwen/Qwen2.5-3B",
+        "google/gemma-4-E2B", "google/gemma-4-E4B",
+    }
+    if model_id not in ALLOWED_MODELS:
+        raise ValueError(f"Unknown model_id: {model_id}")
+
     is_gemma = "gemma" in model_id.lower()
 
     # Model-family-specific compute dtype: Gemma prefers bf16, fallback to fp16
@@ -317,6 +325,10 @@ def quantize_model(
     import shutil
     import subprocess
     import tempfile
+
+    ALLOWED_QUANT_TYPES = {"q4_k_m", "q5_k_m", "q8_0", "q4_0", "q4_1", "q5_0", "q5_1", "q2_k", "q3_k_m", "q6_k"}
+    if quant_type not in ALLOWED_QUANT_TYPES:
+        raise ValueError(f"Invalid quant_type: {quant_type}. Allowed: {ALLOWED_QUANT_TYPES}")
 
     llama_dir = os.getenv("LLAMA_CPP_DIR", "/opt/llama.cpp")
     convert_script = Path(llama_dir) / "convert_hf_to_gguf.py"

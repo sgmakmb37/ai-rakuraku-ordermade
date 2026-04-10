@@ -17,9 +17,9 @@ interface ProjectDetail {
 }
 
 interface HistoryEntry {
-  version: string;
-  timestamp: string;
+  id: string;
   status: "success" | "in_progress" | "failed";
+  created_at: string;
 }
 
 const getHistoryStatusColor = (
@@ -78,10 +78,16 @@ export default function ProjectDetailPage() {
         // 学習履歴を取得
         try {
           const historyData = await api.getTrainingHistory(projectId);
+          const statusMap: Record<string, "success" | "in_progress" | "failed"> = {
+            done: "success",
+            queued: "in_progress",
+            running: "in_progress",
+            failed: "failed",
+          };
           setHistory(
             (historyData.jobs || []).map((j: { id: string; status: string; created_at: string }) => ({
               id: j.id,
-              status: j.status,
+              status: statusMap[j.status] ?? "failed",
               created_at: j.created_at,
             }))
           );
@@ -284,14 +290,14 @@ export default function ProjectDetailPage() {
               <tbody>
                 {history.map((entry, idx) => (
                   <tr
-                    key={idx}
+                    key={entry.id}
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                   >
                     <td className="py-4 px-4 text-gray-900 font-medium">
-                      {entry.version}
+                      v{history.length - idx}
                     </td>
                     <td className="py-4 px-4 text-gray-700">
-                      {new Date(entry.timestamp).toLocaleString("ja-JP")}
+                      {new Date(entry.created_at).toLocaleString("ja-JP")}
                     </td>
                     <td className="py-4 px-4">
                       <span
