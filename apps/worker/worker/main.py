@@ -265,7 +265,7 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             "job_id": job_id,
             "project_id": project_id,
             "status": "success",
-            "artifact_path": storage_path,
+            "storage_path": primary_storage_path,
             "version": current_version,
         }
 
