@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -248,12 +249,17 @@ def train_lora(
     )
 
     trainer.train()
-    # Save with bf16/fp16 to halve the adapter size and shard to <10MB
-    model.save_pretrained(
-        output_dir,
-        safe_serialization=True,
-        max_shard_size="10MB",
-    )
+    # Save only LoRA adapter weights (small ~5-10MB).
+    # Use peft save_pretrained which writes adapter_config.json + adapter_model.safetensors
+    os.makedirs(output_dir, exist_ok=True)
+    model.save_pretrained(output_dir, safe_serialization=True)
+
+    # Log actual file sizes for diagnostics
+    from pathlib import Path as _P
+    for f in _P(output_dir).rglob("*"):
+        if f.is_file():
+            print(f"[SAVED] {f.name}: {f.stat().st_size} bytes", flush=True)
+
     tokenizer.save_pretrained(output_dir)
     return output_dir
 
