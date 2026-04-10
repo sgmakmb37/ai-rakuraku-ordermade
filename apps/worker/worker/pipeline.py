@@ -161,10 +161,14 @@ def train_lora(
     Returns:
         Path to trained adapter
     """
+    is_gemma = "gemma" in model_id.lower()
+
+    # Model-family-specific compute dtype and quantization
+    compute_dtype = torch.bfloat16 if is_gemma else torch.float16
     quant_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_compute_dtype=compute_dtype,
         bnb_4bit_use_double_quant=True,
     )
 
@@ -172,11 +176,10 @@ def train_lora(
         model_id,
         trust_remote_code=True,
     )
-    # Ensure tokenizer has a proper eos_token (Qwen base/Gemma fallbacks)
     if not tokenizer.eos_token or tokenizer.eos_token == "<EOS_TOKEN>":
         if "qwen" in model_id.lower():
             tokenizer.eos_token = "<|endoftext|>"
-        elif "gemma" in model_id.lower():
+        elif is_gemma:
             tokenizer.eos_token = "<end_of_turn>"
         else:
             tokenizer.eos_token = "</s>"
@@ -190,7 +193,7 @@ def train_lora(
     print(
         f"[VERSIONS] python={sys.version.split()[0]} "
         f"transformers={_tf.__version__} trl={_trl.__version__} "
-        f"peft={_peft.__version__} eos='{tokenizer.eos_token}'",
+        f"peft={_peft.__version__} model={model_id} eos='{tokenizer.eos_token}'",
         flush=True,
     )
 
@@ -199,46 +202,61 @@ def train_lora(
         quantization_config=quant_config,
         device_map="auto",
         trust_remote_code=True,
-        torch_dtype=torch.float16,
+        torch_dtype=compute_dtype,
     )
     model = prepare_model_for_kbit_training(model)
 
-    # Smaller LoRA: r=8, attention-only target modules.
-    # Keeps adapter size <15MB so Supabase Storage 50MB limit is never hit.
     if existing_lora_path:
-        # Resume: load previous adapter directly onto base model.
-        # Do NOT call get_peft_model first — PeftModel.from_pretrained handles wrapping.
         print(f"[RESUME] loading existing LoRA adapter from {existing_lora_path}", flush=True)
         model = PeftModel.from_pretrained(
             model, existing_lora_path, is_trainable=True
         )
     else:
-        lora_config = LoraConfig(
-            r=8,
-            lora_alpha=16,
-            lora_dropout=0.0,
-            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-            bias="none",
-            task_type="CAUSAL_LM",
-        )
+        # Model-family-specific LoRA config
+        if is_gemma:
+            # Google Gemma 4 official QLoRA: all-linear, r=16, dropout=0.05
+            # modules_to_save omitted to keep adapter <50MB (embed is ~1GB for 256k vocab)
+            lora_config = LoraConfig(
+                r=16,
+                lora_alpha=16,
+                lora_dropout=0.05,
+                target_modules="all-linear",
+                bias="none",
+                task_type="CAUSAL_LM",
+            )
+        else:
+            # Qwen: r=8, attention-only, keeps adapter ~14MB
+            lora_config = LoraConfig(
+                r=8,
+                lora_alpha=16,
+                lora_dropout=0.0,
+                target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+                bias="none",
+                task_type="CAUSAL_LM",
+            )
         model = get_peft_model(model, lora_config)
 
     dataset = Dataset.from_dict({"text": train_texts})
 
-    # Do NOT pass eos_token to SFTConfig — let SFTTrainer auto-resolve from
-    # processing_class.eos_token (tokenizer.eos_token we set above).
+    # Model-family-specific training hyperparameters
+    if is_gemma:
+        batch_size, lr, use_bf16 = 1, 5e-5, True
+    else:
+        batch_size, lr, use_bf16 = 2, 2e-4, False
+
     sft_config = SFTConfig(
         output_dir=output_dir,
         max_steps=max_steps,
-        per_device_train_batch_size=2,
+        per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=4,
         warmup_steps=5,
-        learning_rate=2e-4,
-        fp16=True,
+        learning_rate=lr,
+        fp16=not use_bf16,
+        bf16=use_bf16,
         logging_steps=5,
         optim="paged_adamw_8bit",
         weight_decay=0.01,
-        lr_scheduler_type="linear",
+        lr_scheduler_type="constant" if is_gemma else "linear",
         seed=3407,
         save_steps=max_steps,
         max_length=2048,

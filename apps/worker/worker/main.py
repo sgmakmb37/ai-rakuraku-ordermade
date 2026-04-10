@@ -28,8 +28,8 @@ GGUF_CHUNK_SIZE = 48 * 1024 * 1024
 MODEL_ID_MAP = {
     "qwen2.5-1.5b": "Qwen/Qwen2.5-1.5B",
     "qwen2.5-3b": "Qwen/Qwen2.5-3B",
-    "gemma-3n-e2b": "unsloth/gemma-3n-E2B-it",
-    "gemma-3n-e4b": "unsloth/gemma-3n-E4B-it",
+    "gemma-4-e2b": "google/gemma-4-E2B",
+    "gemma-4-e4b": "google/gemma-4-E4B",
 }
 
 

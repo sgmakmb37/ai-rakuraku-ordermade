@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 
 type Step = 1 | 2 | 3 | 4;
 
-type ModelType = "qwen2.5-1.5b" | "qwen2.5-3b" | "gemma-3n-e2b" | "gemma-3n-e4b";
+type ModelType = "qwen2.5-1.5b" | "qwen2.5-3b" | "gemma-4-e2b" | "gemma-4-e4b";
 
 interface FormData {
   modelType: ModelType;
@@ -275,17 +275,17 @@ export default function NewProjectPage() {
                 >
                   <option value="qwen2.5-1.5b">高速（軽量）- Qwen2.5 1.5B</option>
                   <option value="qwen2.5-3b">標準（高品質）- Qwen2.5 3B</option>
-                  <option value="gemma-3n-e2b">マルチモーダル軽量 - Gemma 3n E2B</option>
-                  <option value="gemma-3n-e4b">マルチモーダル標準 - Gemma 3n E4B</option>
+                  <option value="gemma-4-e2b">Google Gemma 4 E2B（軽量）</option>
+                  <option value="gemma-4-e4b">Google Gemma 4 E4B（高品質）</option>
                 </select>
                 <p className="text-sm text-gray-700 mt-3">
                   {formData.modelType === "qwen2.5-1.5b"
                     ? "軽量モデルは高速に学習できますが、精度は標準モデルより低い場合があります。日本語性能に強みがあります。"
                     : formData.modelType === "qwen2.5-3b"
                     ? "標準モデルは高品質な学習が期待できます。日本語性能に強みがあります。学習時間が少し長くなります。"
-                    : formData.modelType === "gemma-3n-e2b"
-                    ? "Gemma 3n E2B はGoogle製の軽量モデルです。マルチモーダル対応・多言語対応が特徴です。"
-                    : "Gemma 3n E4B はGoogle製の高品質モデルです。マルチモーダル対応・多言語対応が特徴で、より精度が高くなります。"}
+                    : formData.modelType === "gemma-4-e2b"
+                    ? "Gemma 4 E2B はGoogle製の最新軽量モデルです。2Bパラメータ相当で高速に学習できます。"
+                    : "Gemma 4 E4B はGoogle製の最新高品質モデルです。4Bパラメータ相当で、より精度の高い学習が期待できます。"}
                 </p>
               </div>
             </div>
