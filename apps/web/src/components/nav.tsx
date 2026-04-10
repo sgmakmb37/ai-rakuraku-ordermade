@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Sun, Moon, LogOut, ChevronLeft } from "lucide-react";
+import { Sun, Moon, LogOut, ChevronLeft, Globe } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
+import { useLocale } from "@/lib/i18n";
 
 interface NavProps {
   /** Left side content: "back" shows ← back link, "brand" shows service name */
@@ -16,6 +17,7 @@ interface NavProps {
 export function Nav({ left = "brand", rightLabel, onLogout, isLogoutLoading }: NavProps) {
   const router = useRouter();
   const { theme, toggle } = useTheme();
+  const { locale, setLocale } = useLocale();
 
   return (
     <nav
@@ -58,11 +60,11 @@ export function Nav({ left = "brand", rightLabel, onLogout, isLogoutLoading }: N
             }}
           >
             <ChevronLeft size={16} />
-            <span>戻る</span>
+            <span>{locale === "en" ? "Back" : "戻る"}</span>
           </button>
         ) : (
           <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text)" }}>
-            AIらくらくオーダーメイド
+            {locale === "en" ? "AI Easy Ordermade" : "AIらくらくオーダーメイド"}
           </span>
         )}
 
@@ -76,6 +78,28 @@ export function Nav({ left = "brand", rightLabel, onLogout, isLogoutLoading }: N
               {rightLabel}
             </span>
           )}
+
+          <button
+            onClick={() => setLocale(locale === "ja" ? "en" : "ja")}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--color-text-tertiary)",
+              padding: 4,
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+              borderRadius: 8,
+              transition: "color 200ms",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+            }}
+            aria-label="Toggle language"
+          >
+            <Globe size={14} />
+            <span>{locale === "ja" ? "EN" : "JA"}</span>
+          </button>
 
           <button
             onClick={toggle}
@@ -113,7 +137,7 @@ export function Nav({ left = "brand", rightLabel, onLogout, isLogoutLoading }: N
               }}
             >
               <LogOut size={14} />
-              <span>{isLogoutLoading ? "..." : "ログアウト"}</span>
+              <span>{isLogoutLoading ? "..." : (locale === "en" ? "Logout" : "ログアウト")}</span>
             </button>
           )}
         </div>
