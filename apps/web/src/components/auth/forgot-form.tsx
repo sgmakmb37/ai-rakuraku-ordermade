@@ -1,6 +1,7 @@
 "use client";
 
 import { ErrorAlert } from "@/components/error-alert";
+import { useLocale } from "@/lib/i18n";
 
 interface ForgotFormProps {
   email: string;
@@ -21,6 +22,7 @@ export function ForgotForm({
   onSubmit,
   onNavigate,
 }: ForgotFormProps) {
+  const { t } = useLocale();
   return (
     <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
       <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
@@ -33,15 +35,13 @@ export function ForgotForm({
             lineHeight: 1.19,
           }}
         >
-          パスワードをリセット
+          {t("login.forgot.title")}
         </h2>
         <p
           className="text-caption"
           style={{ color: "var(--color-text-secondary)" }}
         >
-          登録されているメールアドレスを入力してください。
-          <br />
-          リセットメールをお送りします。
+          {t("login.forgot.description")}
         </p>
       </div>
 
@@ -56,7 +56,7 @@ export function ForgotForm({
             marginBottom: "0.5rem",
           }}
         >
-          メールアドレス
+          {t("login.email")}
         </label>
         <input
           id="forgot-email"
@@ -81,10 +81,10 @@ export function ForgotForm({
         {isLoading ? (
           <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
             <span className="spinner-apple" style={{ width: 16, height: 16, borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }} />
-            送信中...
+            {t("login.forgot.submitting")}
           </span>
         ) : (
-          "リセットメールを送信"
+          t("login.forgot.submit")
         )}
       </button>
 
@@ -104,7 +104,7 @@ export function ForgotForm({
           onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
           onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
         >
-          ログインに戻る
+          {t("login.forgot.backToLogin")}
         </button>
       </div>
     </form>

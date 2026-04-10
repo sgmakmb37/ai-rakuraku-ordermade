@@ -1,6 +1,7 @@
 "use client";
 
 import { ErrorAlert } from "@/components/error-alert";
+import { useLocale } from "@/lib/i18n";
 
 interface VerifyFormProps {
   email: string;
@@ -30,6 +31,7 @@ export function VerifyForm({
   onCodeKeyDown,
   onResend,
 }: VerifyFormProps) {
+  const { t } = useLocale();
   return (
     <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
       <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
@@ -42,13 +44,13 @@ export function VerifyForm({
             lineHeight: 1.19,
           }}
         >
-          確認コードを入力
+          {t("login.verify.title")}
         </h2>
         <p
           className="text-caption"
           style={{ color: "var(--color-text-secondary)" }}
         >
-          {email}に送信した6桁のコードを入力してください。
+          {t("login.verify.description", { email })}
         </p>
       </div>
 
@@ -104,10 +106,10 @@ export function VerifyForm({
         {isLoading ? (
           <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
             <span className="spinner-apple" style={{ width: 16, height: 16, borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }} />
-            確認中...
+            {t("login.verify.submitting")}
           </span>
         ) : (
-          "確認"
+          t("login.verify.submit")
         )}
       </button>
 
@@ -129,7 +131,7 @@ export function VerifyForm({
           onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.textDecoration = "underline"; }}
           onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
         >
-          コードを再送信
+          {t("login.verify.resend")}
         </button>
       </div>
     </form>

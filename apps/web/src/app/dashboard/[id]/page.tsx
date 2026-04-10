@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { getStatusBadgeColor, getStatusLabel, type ProjectStatus } from "@/lib/status-utils";
+import { useLocale } from "@/lib/i18n";
 import { Nav } from "@/components/nav";
 import { PageSpinner } from "@/components/spinner";
 import { ErrorAlert } from "@/components/error-alert";
@@ -37,7 +38,17 @@ const getHistoryStatusColor = (status: "success" | "in_progress" | "failed") => 
   }
 };
 
-const getHistoryStatusLabel = (status: "success" | "in_progress" | "failed") => {
+const getHistoryStatusLabel = (status: "success" | "in_progress" | "failed", t?: (key: string) => string) => {
+  if (t) {
+    switch (status) {
+      case "success":
+        return t("status.success");
+      case "in_progress":
+        return t("status.inProgress");
+      case "failed":
+        return t("status.failed");
+    }
+  }
   switch (status) {
     case "success":
       return "成功";
@@ -49,6 +60,7 @@ const getHistoryStatusLabel = (status: "success" | "in_progress" | "failed") => 
 };
 
 export default function ProjectDetailPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const params = useParams();
   const projectId = params.id as string;
@@ -96,7 +108,7 @@ export default function ProjectDetailPage() {
           setHistory([]);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "プロジェクトの取得に失敗しました");
+        setError(err instanceof Error ? err.message : t("dashboard.fetchError"));
       } finally {
         setIsLoading(false);
       }
@@ -118,7 +130,7 @@ export default function ProjectDetailPage() {
         }
       }
     } catch {
-      alert("追加学習の開始に失敗しました。もう一度お試しください。");
+      alert(t("detail.errorAddTraining"));
     } finally {
       setIsActionLoading(false);
     }
@@ -126,17 +138,17 @@ export default function ProjectDetailPage() {
 
   const handleReset = async () => {
     const confirmed = window.confirm(
-      "現在の学習内容をリセットする。元に戻せないが実行するか？"
+      t("detail.resetConfirm")
     );
     if (!confirmed) return;
 
     try {
       setIsActionLoading(true);
       await api.resetProject(projectId);
-      alert("プロジェクトをリセットしました");
+      alert(t("detail.resetSuccess"));
       window.location.reload();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "リセットに失敗しました");
+      alert(err instanceof Error ? err.message : t("detail.errorReset"));
     } finally {
       setIsActionLoading(false);
     }
@@ -150,7 +162,7 @@ export default function ProjectDetailPage() {
         window.location.href = response.download_url;
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "ダウンロードに失敗しました");
+      alert(err instanceof Error ? err.message : t("detail.errorDownload"));
     } finally {
       setIsActionLoading(false);
     }
@@ -174,10 +186,10 @@ export default function ProjectDetailPage() {
         }}
       >
         <p className="text-caption" style={{ color: "var(--color-error)" }}>
-          {error || "プロジェクトが見つかりません"}
+          {error || t("detail.notFound")}
         </p>
         <button onClick={() => router.push("/dashboard")} className="btn-primary">
-          ダッシュボードに戻る
+          {t("detail.backToDashboard")}
         </button>
       </div>
     );
@@ -230,7 +242,7 @@ export default function ProjectDetailPage() {
                 flexShrink: 0,
               }}
             >
-              {getStatusLabel(project.status)}
+              {getStatusLabel(project.status, t)}
             </span>
           </div>
 
@@ -248,7 +260,7 @@ export default function ProjectDetailPage() {
           >
             <div>
               <p className="text-micro" style={{ color: "var(--color-text-tertiary)", marginBottom: 4 }}>
-                ジャンル
+                {t("detail.genre")}
               </p>
               <p className="text-body-emphasis" style={{ color: "var(--color-text)" }}>
                 {project.genre}
@@ -256,7 +268,7 @@ export default function ProjectDetailPage() {
             </div>
             <div>
               <p className="text-micro" style={{ color: "var(--color-text-tertiary)", marginBottom: 4 }}>
-                作成日
+                {t("detail.createdDate")}
               </p>
               <p className="text-body-emphasis" style={{ color: "var(--color-text)" }}>
                 {new Date(project.created_at).toLocaleDateString("ja-JP")}
@@ -264,10 +276,10 @@ export default function ProjectDetailPage() {
             </div>
             <div>
               <p className="text-micro" style={{ color: "var(--color-text-tertiary)", marginBottom: 4 }}>
-                残り日数
+                {t("detail.daysLeft")}
               </p>
               <p className="text-body-emphasis" style={{ color: "var(--color-text)" }}>
-                あと{project.days_until_deletion}日
+                {t("detail.daysLeftValue", { n: project.days_until_deletion })}
               </p>
             </div>
           </div>
@@ -275,7 +287,7 @@ export default function ProjectDetailPage() {
           {/* Description */}
           <div>
             <p className="text-micro" style={{ color: "var(--color-text-tertiary)", marginBottom: 8 }}>
-              用途説明
+              {t("detail.purpose")}
             </p>
             <p className="text-caption" style={{ color: "var(--color-text-secondary)" }}>
               {project.description}
@@ -297,7 +309,7 @@ export default function ProjectDetailPage() {
             disabled={isActionLoading}
             className="btn-primary"
           >
-            {isActionLoading ? "処理中..." : <><BookOpen size={18} />追加学習</>}
+            {isActionLoading ? t("detail.processing") : <><BookOpen size={18} />{t("detail.addTraining")}</>}
           </button>
           <button
             onClick={handleReset}
@@ -310,14 +322,14 @@ export default function ProjectDetailPage() {
               cursor: isActionLoading ? "not-allowed" : "pointer",
             }}
           >
-            {isActionLoading ? "処理中..." : <><RotateCcw size={18} />リセット</>}
+            {isActionLoading ? t("detail.processing") : <><RotateCcw size={18} />{t("detail.reset")}</>}
           </button>
           <button
             onClick={handleDownload}
             disabled={isActionLoading}
             className="btn-secondary"
           >
-            {isActionLoading ? "処理中..." : <><Download size={18} />ダウンロード</>}
+            {isActionLoading ? t("detail.processing") : <><Download size={18} />{t("detail.download")}</>}
           </button>
         </div>
 
@@ -327,12 +339,12 @@ export default function ProjectDetailPage() {
             className="text-card-title"
             style={{ color: "var(--color-text)", marginBottom: 24 }}
           >
-            学習履歴
+            {t("detail.history")}
           </h2>
 
           {history.length === 0 ? (
             <p className="text-caption" style={{ color: "var(--color-text-tertiary)" }}>
-              学習履歴がありません
+              {t("detail.noHistory")}
             </p>
           ) : (
             <div style={{ overflowX: "auto" }}>
@@ -348,7 +360,7 @@ export default function ProjectDetailPage() {
                         fontWeight: 500,
                       }}
                     >
-                      バージョン
+                      {t("detail.version")}
                     </th>
                     <th
                       className="text-micro"
@@ -359,7 +371,7 @@ export default function ProjectDetailPage() {
                         fontWeight: 500,
                       }}
                     >
-                      日時
+                      {t("detail.date")}
                     </th>
                     <th
                       className="text-micro"
@@ -370,7 +382,7 @@ export default function ProjectDetailPage() {
                         fontWeight: 500,
                       }}
                     >
-                      ステータス
+                      {t("detail.status")}
                     </th>
                   </tr>
                 </thead>
@@ -410,7 +422,7 @@ export default function ProjectDetailPage() {
                             fontWeight: 500,
                           }}
                         >
-                          {getHistoryStatusLabel(entry.status)}
+                          {getHistoryStatusLabel(entry.status, t)}
                         </span>
                       </td>
                     </tr>

@@ -3,8 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useLocale } from "@/lib/i18n";
 
 export default function PasswordResetPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const supabase = createClient();
   const [password, setPassword] = useState("");
@@ -18,11 +20,11 @@ export default function PasswordResetPage() {
     setError("");
 
     if (password.length < 6) {
-      setError("パスワードは6文字以上で入力してください");
+      setError(t("auth.reset.errorMinLength"));
       return;
     }
     if (password !== confirmPassword) {
-      setError("パスワードが一致しません");
+      setError(t("auth.reset.errorMismatch"));
       return;
     }
 
@@ -32,14 +34,14 @@ export default function PasswordResetPage() {
       if (error) {
         setError(
           error.message === "Auth session missing!"
-            ? "リセットリンクの有効期限が切れました。もう一度パスワードリセットを申し込んでください。"
+            ? t("auth.reset.errorExpired")
             : error.message
         );
       } else {
         setIsComplete(true);
       }
     } catch {
-      setError("エラーが発生しました");
+      setError(t("auth.reset.errorGeneric"));
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +63,7 @@ export default function PasswordResetPage() {
               letterSpacing: "-0.02em",
             }}
           >
-            パスワード更新完了
+            {t("auth.reset.complete.title")}
           </h1>
           <p
             className="text-caption"
@@ -70,14 +72,14 @@ export default function PasswordResetPage() {
               marginBottom: "2rem",
             }}
           >
-            新しいパスワードが設定されました。
+            {t("auth.reset.complete.description")}
           </p>
           <button
             onClick={() => router.push("/dashboard")}
             className="btn-primary"
             style={{ width: "100%" }}
           >
-            ダッシュボードへ
+            {t("auth.reset.complete.toDashboard")}
           </button>
         </div>
       </div>
@@ -100,7 +102,7 @@ export default function PasswordResetPage() {
             textAlign: "center",
           }}
         >
-          新しいパスワード設定
+          {t("auth.reset.title")}
         </h1>
         <p
           className="text-caption"
@@ -110,7 +112,7 @@ export default function PasswordResetPage() {
             marginBottom: "2rem",
           }}
         >
-          新しいパスワードを入力してください。
+          {t("auth.reset.description")}
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -124,13 +126,13 @@ export default function PasswordResetPage() {
                 marginBottom: "0.375rem",
               }}
             >
-              新しいパスワード
+              {t("auth.reset.newPassword")}
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="6文字以上"
+              placeholder={t("auth.reset.passwordPlaceholder")}
               required
               className="input-apple"
               style={{ width: "100%" }}
@@ -147,13 +149,13 @@ export default function PasswordResetPage() {
                 marginBottom: "0.375rem",
               }}
             >
-              パスワード確認
+              {t("auth.reset.confirmPassword")}
             </label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="もう一度入力"
+              placeholder={t("auth.reset.confirmPlaceholder")}
               required
               className="input-apple"
               style={{ width: "100%" }}
@@ -178,10 +180,10 @@ export default function PasswordResetPage() {
             {isLoading ? (
               <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
                 <span className="spinner-apple" />
-                更新中...
+                {t("auth.reset.submitting")}
               </span>
             ) : (
-              "パスワードを更新"
+              t("auth.reset.submit")
             )}
           </button>
         </form>

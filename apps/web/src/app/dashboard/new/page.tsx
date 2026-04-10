@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { useLocale } from "@/lib/i18n";
 import { Nav } from "@/components/nav";
 import { Spinner } from "@/components/spinner";
 import { ChevronLeft, Plus, X, Upload, FileText } from "lucide-react";
@@ -24,19 +25,27 @@ interface FileContent {
   content: string;
 }
 
-const GENRES = [
-  "カスタマーサポート",
-  "社内ナレッジ",
-  "文章作成・要約",
-  "プログラミング補助",
-  "教育・学習支援",
-  "その他",
+const GENRE_KEYS = [
+  "new.genres.customerSupport",
+  "new.genres.internalKnowledge",
+  "new.genres.writingSummary",
+  "new.genres.programmingAssist",
+  "new.genres.educationSupport",
+  "new.genres.other",
 ];
 
-const STEP_LABELS = ["モデル選択", "用途設定", "データ入力", "確認・開始"];
+const STEP_LABEL_KEYS = [
+  "new.stepLabels.modelSelect",
+  "new.stepLabels.usageSetting",
+  "new.stepLabels.dataInput",
+  "new.stepLabels.confirmStart",
+];
 
 export default function NewProjectPage() {
+  const { t } = useLocale();
   const router = useRouter();
+  const GENRES = GENRE_KEYS.map((key) => t(key));
+  const STEP_LABELS = STEP_LABEL_KEYS.map((key) => t(key));
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [formData, setFormData] = useState<FormData>({
     modelType: "qwen2.5-3b",
@@ -86,7 +95,7 @@ export default function NewProjectPage() {
       const ext = file.name.split(".").pop()?.toLowerCase();
       if (!["txt", "pdf", "csv", "json"].includes(ext || "")) return false;
       if (file.size > MAX_FILE_SIZE) {
-        alert(`${file.name} は5MBを超えています`);
+        alert(t("new.fileTooLarge", { name: file.name }));
         return false;
       }
       return true;
@@ -205,20 +214,13 @@ export default function NewProjectPage() {
         throw new Error("Invalid checkout URL");
       }
     } catch {
-      alert("エラーが発生しました。もう一度お試しください。");
+      alert(t("new.errorGeneric"));
       setIsLoading(false);
     }
   };
 
   const sourceCount = formData.urls.length + formData.files.length;
-  const modelLabel =
-    formData.modelType === "qwen2.5-1.5b"
-      ? "高速（軽量）- Qwen2.5 1.5B"
-      : formData.modelType === "qwen2.5-3b"
-      ? "標準（高品質）- Qwen2.5 3B"
-      : formData.modelType === "gemma-4-e2b"
-      ? "Google Gemma 4 E2B（軽量）"
-      : "Google Gemma 4 E4B（高品質）";
+  const modelLabel = t(`new.models.${formData.modelType}.label`);
 
   return (
     <div
@@ -249,7 +251,7 @@ export default function NewProjectPage() {
             onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
             onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
           >
-            <ChevronLeft size={16} /><span>ダッシュボードに戻る</span>
+            <ChevronLeft size={16} /><span>{t("new.backToDashboard")}</span>
           </button>
         </div>
 
@@ -342,7 +344,7 @@ export default function NewProjectPage() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                ステップ1: モデル選択
+                {t("new.step1.title")}
               </h2>
               <div>
                 <label
@@ -354,7 +356,7 @@ export default function NewProjectPage() {
                     marginBottom: "0.5rem",
                   }}
                 >
-                  学習に使用するモデルを選択してください
+                  {t("new.step1.label")}
                 </label>
                 <select
                   value={formData.modelType}
@@ -362,10 +364,10 @@ export default function NewProjectPage() {
                   className="input-apple"
                   style={{ width: "100%" }}
                 >
-                  <option value="qwen2.5-1.5b">高速（軽量）- Qwen2.5 1.5B</option>
-                  <option value="qwen2.5-3b">標準（高品質）- Qwen2.5 3B</option>
-                  <option value="gemma-4-e2b">Google Gemma 4 E2B（軽量）</option>
-                  <option value="gemma-4-e4b">Google Gemma 4 E4B（高品質）</option>
+                  <option value="qwen2.5-1.5b">{t("new.models.qwen2.5-1.5b.label")}</option>
+                  <option value="qwen2.5-3b">{t("new.models.qwen2.5-3b.label")}</option>
+                  <option value="gemma-4-e2b">{t("new.models.gemma-4-e2b.label")}</option>
+                  <option value="gemma-4-e4b">{t("new.models.gemma-4-e4b.label")}</option>
                 </select>
                 <p
                   className="text-caption"
@@ -374,13 +376,7 @@ export default function NewProjectPage() {
                     marginTop: "0.75rem",
                   }}
                 >
-                  {formData.modelType === "qwen2.5-1.5b"
-                    ? "軽量モデルは高速に学習できますが、精度は標準モデルより低い場合があります。日本語性能に強みがあります。"
-                    : formData.modelType === "qwen2.5-3b"
-                    ? "標準モデルは高品質な学習が期待できます。日本語性能に強みがあります。学習時間が少し長くなります。"
-                    : formData.modelType === "gemma-4-e2b"
-                    ? "Gemma 4 E2B はGoogle製の最新軽量モデルです。2Bパラメータ相当で高速に学習できます。"
-                    : "Gemma 4 E4B はGoogle製の最新高品質モデルです。4Bパラメータ相当で、より精度の高い学習が期待できます。"}
+                  {t(`new.models.${formData.modelType}.desc`)}
                 </p>
               </div>
             </div>
@@ -398,7 +394,7 @@ export default function NewProjectPage() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                ステップ2: 用途設定
+                {t("new.step2.title")}
               </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 {/* Genre Selection */}
@@ -412,7 +408,7 @@ export default function NewProjectPage() {
                       marginBottom: "0.5rem",
                     }}
                   >
-                    ジャンルを選択
+                    {t("new.step2.genre")}
                   </label>
                   <select
                     value={formData.genre}
@@ -420,7 +416,7 @@ export default function NewProjectPage() {
                     className="input-apple"
                     style={{ width: "100%" }}
                   >
-                    <option value="">選択してください</option>
+                    <option value="">{t("new.step2.genrePlaceholder")}</option>
                     {GENRES.map((g) => (
                       <option key={g} value={g}>
                         {g}
@@ -440,12 +436,12 @@ export default function NewProjectPage() {
                       marginBottom: "0.5rem",
                     }}
                   >
-                    用途説明（任意）
+                    {t("new.step2.purpose")}
                   </label>
                   <textarea
                     value={formData.purpose}
                     onChange={handlePurposeChange}
-                    placeholder="例：ECサイトの問い合わせ対応用"
+                    placeholder={t("new.step2.purposePlaceholder")}
                     rows={4}
                     className="input-apple"
                     style={{ width: "100%", resize: "vertical" }}
@@ -467,7 +463,7 @@ export default function NewProjectPage() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                ステップ3: データ入力
+                {t("new.step3.title")}
               </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 {/* URL Input */}
@@ -481,7 +477,7 @@ export default function NewProjectPage() {
                       marginBottom: "0.5rem",
                     }}
                   >
-                    URLを追加（最大5件）
+                    {t("new.step3.urlLabel")}
                   </label>
                   <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
                     <input
@@ -503,7 +499,7 @@ export default function NewProjectPage() {
                         cursor: !newUrl.trim() || formData.urls.length >= 5 ? "not-allowed" : "pointer",
                       }}
                     >
-                      <Plus size={14} />追加
+                      <Plus size={14} />{t("new.add")}
                     </button>
                   </div>
                   {formData.urls.length > 0 && (
@@ -546,7 +542,7 @@ export default function NewProjectPage() {
                               flexShrink: 0,
                             }}
                           >
-                            <X size={14} />削除
+                            <X size={14} />{t("new.delete")}
                           </button>
                         </li>
                       ))}
@@ -565,7 +561,7 @@ export default function NewProjectPage() {
                       marginBottom: "0.5rem",
                     }}
                   >
-                    ファイルをアップロード（.txt/.pdf/.csv/.json、最大5件）
+                    {t("new.step3.fileLabel")}
                   </label>
                   <div
                     style={{
@@ -600,13 +596,13 @@ export default function NewProjectPage() {
                           color: "var(--color-text-primary)",
                         }}
                       >
-                        ドラッグ&ドロップまたはクリック
+                        {t("new.step3.dragDrop")}
                       </p>
                       <p
                         className="text-caption"
                         style={{ color: "var(--color-text-secondary)", marginTop: "0.25rem" }}
                       >
-                        対応形式: .txt, .pdf, .csv, .json
+                        {t("new.step3.fileFormats")}
                       </p>
                     </label>
                   </div>
@@ -649,7 +645,7 @@ export default function NewProjectPage() {
                               marginLeft: "0.75rem",
                             }}
                           >
-                            <X size={14} />削除
+                            <X size={14} />{t("new.delete")}
                           </button>
                         </li>
                       ))}
@@ -669,15 +665,15 @@ export default function NewProjectPage() {
                     className="text-caption"
                     style={{ color: "var(--color-text-primary)", marginBottom: "0.25rem" }}
                   >
-                    <span style={{ fontWeight: 600 }}>追加済みソース:</span>{" "}
-                    {sourceCount}件 / 5件
+                    <span style={{ fontWeight: 600 }}>{t("new.step3.sources")}</span>{" "}
+                    {t("new.sourcesCount", { n: sourceCount })}
                   </p>
                   <p
                     className="text-caption"
                     style={{ color: "var(--color-text-primary)" }}
                   >
-                    <span style={{ fontWeight: 600 }}>推定文字数:</span>{" "}
-                    {charCount.toLocaleString()}文字 / 500,000文字
+                    <span style={{ fontWeight: 600 }}>{t("new.step3.charCount")}</span>{" "}
+                    {t("new.charsCount", { n: charCount.toLocaleString() })}
                   </p>
                 </div>
               </div>
@@ -696,7 +692,7 @@ export default function NewProjectPage() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                ステップ4: 確認・開始
+                {t("new.step4.title")}
               </h2>
 
               <div
@@ -710,10 +706,10 @@ export default function NewProjectPage() {
                 }}
               >
                 {[
-                  { label: "モデル", value: modelLabel },
-                  { label: "ジャンル", value: formData.genre || "未選択" },
-                  { label: "用途説明", value: formData.purpose || "入力なし" },
-                  { label: "データソース数", value: `${sourceCount}件` },
+                  { label: t("new.step4.model"), value: modelLabel },
+                  { label: t("new.step2.genre"), value: formData.genre || t("new.notSelected") },
+                  { label: t("detail.purpose"), value: formData.purpose || t("new.noInput") },
+                  { label: t("new.dataSourceCount"), value: `${sourceCount}件` },
                 ].map((row, i) => (
                   <div
                     key={row.label}
@@ -762,10 +758,10 @@ export default function NewProjectPage() {
                 {isLoading ? (
                   <>
                     <span className="spinner-apple" />
-                    処理中...
+                    {t("detail.processing")}
                   </>
                 ) : (
-                  "学習を開始する（770円・税込）"
+                  t("new.step4.start")
                 )}
               </button>
             </div>
@@ -786,7 +782,7 @@ export default function NewProjectPage() {
                 className="btn-secondary"
                 style={{ flex: 1 }}
               >
-                戻る
+                {t("new.nav.back")}
               </button>
             )}
             {currentStep < 4 && (
@@ -795,7 +791,7 @@ export default function NewProjectPage() {
                 className="btn-primary"
                 style={{ flex: 1 }}
               >
-                次へ
+                {t("new.nav.next")}
               </button>
             )}
           </div>

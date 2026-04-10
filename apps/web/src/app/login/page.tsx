@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useLocale } from "@/lib/i18n";
 import { LoginForm } from "@/components/auth/login-form";
 import { SignupForm } from "@/components/auth/signup-form";
 import { VerifyForm } from "@/components/auth/verify-form";
@@ -11,6 +12,7 @@ import { ForgotForm } from "@/components/auth/forgot-form";
 type AuthView = "login" | "signup" | "verify" | "forgot";
 
 export default function LoginPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const supabase = createClient();
   const [view, setView] = useState<AuthView>("login");
@@ -48,7 +50,7 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     } catch {
-      setError("ログインに失敗しました。もう一度お試しください。");
+      setError(t("login.errorGeneric"));
     } finally {
       setIsLoading(false);
     }
@@ -59,12 +61,12 @@ export default function LoginPage() {
     setError("");
 
     if (password.length < 6) {
-      setError("パスワードは6文字以上です。");
+      setError(t("login.signup.errorMinLength"));
       return;
     }
 
     if (password !== passwordConfirm) {
-      setError("パスワードが一致しません。");
+      setError(t("login.signup.errorMismatch"));
       return;
     }
 
@@ -84,7 +86,7 @@ export default function LoginPage() {
         setPasswordConfirm("");
       }
     } catch {
-      setError("サインアップに失敗しました。もう一度お試しください。");
+      setError(t("login.signup.errorGeneric"));
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +120,7 @@ export default function LoginPage() {
 
     const token = code.join("");
     if (token.length !== 6) {
-      setError("6桁のコードを入力してください。");
+      setError(t("login.verify.errorLength"));
       return;
     }
 
@@ -138,7 +140,7 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     } catch {
-      setError("コード検証に失敗しました。もう一度お試しください。");
+      setError(t("login.verify.errorGeneric"));
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +163,7 @@ export default function LoginPage() {
         codeInputRefs.current[0]?.focus();
       }
     } catch {
-      setError("コード再送に失敗しました。もう一度お試しください。");
+      setError(t("login.verify.errorResend"));
     } finally {
       setIsLoading(false);
     }
@@ -185,7 +187,7 @@ export default function LoginPage() {
         setEmail("");
       }
     } catch {
-      setError("リセットメール送信に失敗しました。もう一度お試しください。");
+      setError(t("login.forgot.errorGeneric"));
     } finally {
       setIsLoading(false);
     }
@@ -246,15 +248,13 @@ export default function LoginPage() {
               marginBottom: "0.5rem",
             }}
           >
-            AIらくらく
-            <br />
-            オーダーメイド
+            {t("common.appName")}
           </h1>
           <p
             className="text-caption"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            誰でもAIをオーダーメイドできる
+            {t("common.tagline")}
           </p>
         </div>
 
@@ -307,9 +307,7 @@ export default function LoginPage() {
             marginTop: "2rem",
           }}
         >
-          ログインすることで、
-          <br />
-          利用規約に同意したものとみなされます。
+          {t("login.terms")}
         </p>
       </div>
     </div>

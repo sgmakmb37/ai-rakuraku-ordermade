@@ -1,6 +1,7 @@
 "use client";
 
 import { ErrorAlert } from "@/components/error-alert";
+import { useLocale } from "@/lib/i18n";
 
 interface LoginFormProps {
   email: string;
@@ -23,6 +24,7 @@ export function LoginForm({
   onSubmit,
   onNavigate,
 }: LoginFormProps) {
+  const { t } = useLocale();
   return (
     <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
       <div>
@@ -36,7 +38,7 @@ export function LoginForm({
             marginBottom: "0.5rem",
           }}
         >
-          メールアドレス
+          {t("login.email")}
         </label>
         <input
           id="login-email"
@@ -61,7 +63,7 @@ export function LoginForm({
             marginBottom: "0.5rem",
           }}
         >
-          パスワード
+          {t("login.password")}
         </label>
         <input
           id="login-password"
@@ -86,10 +88,10 @@ export function LoginForm({
         {isLoading ? (
           <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
             <span className="spinner-apple" style={{ width: 16, height: 16, borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }} />
-            ログイン中...
+            {t("login.submitting")}
           </span>
         ) : (
-          "ログイン"
+          t("login.submit")
         )}
       </button>
 
@@ -109,7 +111,7 @@ export function LoginForm({
           onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
           onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
         >
-          アカウントを作成
+          {t("login.createAccount")}
         </button>
         <button
           type="button"
@@ -126,7 +128,7 @@ export function LoginForm({
           onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
           onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
         >
-          パスワードを忘れた方
+          {t("login.forgotPassword")}
         </button>
       </div>
     </form>

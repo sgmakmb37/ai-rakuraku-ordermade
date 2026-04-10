@@ -13,7 +13,12 @@ export const getStatusBadgeColor = (status: ProjectStatus): string => {
   }
 };
 
-export const getStatusLabel = (status: ProjectStatus): string => {
+export const getStatusLabel = (status: ProjectStatus, t?: (key: string) => string): string => {
+  if (t) {
+    const key = `status.${status}`;
+    return t(key);
+  }
+  // fallback to Japanese
   switch (status) {
     case "created":
       return "作成済み";

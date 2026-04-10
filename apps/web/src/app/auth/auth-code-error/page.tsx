@@ -1,8 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/lib/i18n";
 
 export default function AuthCodeErrorPage() {
+  const { t } = useLocale();
   const router = useRouter();
 
   return (
@@ -20,7 +22,7 @@ export default function AuthCodeErrorPage() {
             letterSpacing: "-0.02em",
           }}
         >
-          認証エラー
+          {t("auth.error.title")}
         </h1>
         <p
           className="text-caption"
@@ -29,14 +31,14 @@ export default function AuthCodeErrorPage() {
             marginBottom: "2rem",
           }}
         >
-          認証処理に失敗しました。もう一度お試しください。
+          {t("auth.error.description")}
         </p>
         <button
           onClick={() => router.push("/login")}
           className="btn-primary"
           style={{ width: "100%" }}
         >
-          ログイン画面に戻る
+          {t("auth.error.backToLogin")}
         </button>
       </div>
     </div>

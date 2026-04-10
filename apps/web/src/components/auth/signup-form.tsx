@@ -1,6 +1,7 @@
 "use client";
 
 import { ErrorAlert } from "@/components/error-alert";
+import { useLocale } from "@/lib/i18n";
 
 interface SignupFormProps {
   email: string;
@@ -27,6 +28,7 @@ export function SignupForm({
   onSubmit,
   onNavigate,
 }: SignupFormProps) {
+  const { t } = useLocale();
   return (
     <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
       <div>
@@ -40,7 +42,7 @@ export function SignupForm({
             marginBottom: "0.5rem",
           }}
         >
-          メールアドレス
+          {t("login.email")}
         </label>
         <input
           id="signup-email"
@@ -65,7 +67,7 @@ export function SignupForm({
             marginBottom: "0.5rem",
           }}
         >
-          パスワード
+          {t("login.password")}
         </label>
         <input
           id="signup-password"
@@ -81,7 +83,7 @@ export function SignupForm({
           className="text-micro"
           style={{ color: "var(--color-text-tertiary)", marginTop: "0.25rem" }}
         >
-          6文字以上
+          {t("login.signup.passwordHint")}
         </p>
       </div>
 
@@ -96,7 +98,7 @@ export function SignupForm({
             marginBottom: "0.5rem",
           }}
         >
-          パスワード確認
+          {t("login.signup.passwordConfirm")}
         </label>
         <input
           id="signup-password-confirm"
@@ -121,10 +123,10 @@ export function SignupForm({
         {isLoading ? (
           <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
             <span className="spinner-apple" style={{ width: 16, height: 16, borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }} />
-            作成中...
+            {t("login.signup.submitting")}
           </span>
         ) : (
-          "アカウントを作成"
+          t("login.signup.submit")
         )}
       </button>
 
@@ -144,7 +146,7 @@ export function SignupForm({
           onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
           onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
         >
-          ログインはこちら
+          {t("login.signup.loginLink")}
         </button>
       </div>
     </form>

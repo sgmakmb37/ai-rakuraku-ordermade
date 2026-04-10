@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { getStatusBadgeColor, getStatusLabel, type ProjectStatus } from "@/lib/status-utils";
+import { useLocale } from "@/lib/i18n";
 import { Nav } from "@/components/nav";
 import { Spinner } from "@/components/spinner";
 import { Plus } from "lucide-react";
@@ -30,6 +31,7 @@ interface ApiProject {
 }
 
 export default function DashboardPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const supabase = createClient();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -53,7 +55,7 @@ export default function DashboardPage() {
         }));
         setProjects(transformedProjects);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "プロジェクトの取得に失敗しました");
+        setError(err instanceof Error ? err.message : t("dashboard.fetchError"));
       } finally {
         setIsLoading(false);
       }
@@ -108,7 +110,7 @@ export default function DashboardPage() {
           }}
         >
           <h1 className="text-section" style={{ color: "var(--color-text)", marginBottom: 24 }}>
-            プロジェクト
+            {t("dashboard.title")}
           </h1>
           <button
             onClick={handleNewProject}
@@ -116,7 +118,7 @@ export default function DashboardPage() {
             className="btn-primary"
             style={!canCreateNewProject ? { opacity: 0.42, cursor: "not-allowed" } : undefined}
           >
-            {canCreateNewProject ? <><Plus size={18} />新規作成</> : "上限に達しています"}
+            {canCreateNewProject ? <><Plus size={18} />{t("dashboard.newProject")}</> : t("dashboard.limitReached")}
           </button>
         </div>
 
@@ -134,7 +136,7 @@ export default function DashboardPage() {
               onClick={() => window.location.reload()}
               className="btn-primary"
             >
-              リトライ
+              {t("common.retry")}
             </button>
           </div>
         ) : projects.length === 0 ? (
@@ -143,10 +145,10 @@ export default function DashboardPage() {
               className="text-caption"
               style={{ color: "var(--color-text-tertiary)", marginBottom: 20 }}
             >
-              まだプロジェクトがありません
+              {t("dashboard.empty")}
             </p>
             <button onClick={handleNewProject} className="btn-primary">
-              最初のプロジェクトを作成
+              {t("dashboard.createFirst")}
             </button>
           </div>
         ) : (
@@ -212,7 +214,7 @@ export default function DashboardPage() {
                       flexShrink: 0,
                     }}
                   >
-                    {getStatusLabel(project.status)}
+                    {getStatusLabel(project.status, t)}
                   </span>
                 </div>
 
@@ -226,10 +228,10 @@ export default function DashboardPage() {
                   }}
                 >
                   <span className="text-micro" style={{ color: "var(--color-text-tertiary)" }}>
-                    作成日 {new Date(project.created_at).toLocaleDateString("ja-JP")}
+                    {t("dashboard.created")} {new Date(project.created_at).toLocaleDateString("ja-JP")}
                   </span>
                   <span className="text-micro" style={{ color: "var(--color-text-tertiary)" }}>
-                    あと{project.days_until_deletion}日
+                    {t("dashboard.daysLeft", { n: project.days_until_deletion })}
                   </span>
                 </div>
               </div>
