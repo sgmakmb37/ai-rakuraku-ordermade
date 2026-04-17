@@ -125,7 +125,7 @@ export const translations = {
       step4: {
         title: "ステップ4: 確認・開始",
         model: "モデル",
-        start: "学習を開始する（770円・税込）",
+        start: "学習を開始する（880円・税込）",
       },
       nav: {
         model: "モデル選択",
@@ -323,7 +323,7 @@ export const translations = {
       step4: {
         title: "Step 4: Confirm & start",
         model: "Model",
-        start: "Start training (¥770 incl. tax)",
+        start: "Start training (¥880 incl. tax)",
       },
       nav: {
         model: "Model",

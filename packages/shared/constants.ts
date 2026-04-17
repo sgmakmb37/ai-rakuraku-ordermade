@@ -42,6 +42,6 @@ export const MAX_PROJECTS_PER_USER = 5;
 export const MAX_SOURCES_PER_PROJECT = 5;
 export const MAX_TOTAL_CHARS = 500000;
 export const MAX_CHARS_PER_SOURCE = 200000;
-export const PRICE_PER_TRAINING = 770;
+export const PRICE_PER_TRAINING = 880;
 export const DATA_RETENTION_DAYS = 30;
 export const MAX_TRAINING_MINUTES = 60;

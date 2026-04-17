@@ -14,7 +14,7 @@ from app.schemas import CheckoutRequest
 
 logger = logging.getLogger(__name__)
 
-PRICE_JPY = 770
+PRICE_JPY = 880
 
 stripe.api_key = settings.stripe_secret_key
 
@@ -35,7 +35,7 @@ async def create_checkout(
     except Exception:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Stripe Checkout Session作成（770円税込）
+    # Stripe Checkout Session作成（880円税込）
     try:
         session = stripe.checkout.Session.create(
             line_items=[
