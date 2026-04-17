@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createMiddlewareClient } from "@/lib/supabase/middleware";
 
-const PUBLIC_PATHS = ["/", "/terms", "/privacy", "/contact"];
+const PUBLIC_PATHS = ["/", "/terms", "/privacy", "/contact", "/tokushoho"];
 
 function detectLocale(request: NextRequest): string {
   const cookie = request.cookies.get("locale")?.value;
