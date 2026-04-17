@@ -19,7 +19,7 @@ export const translations = {
       titleLine2: "オーダーメイドできる",
       subtitleLine1: "専門知識なし、GPU不要、UI操作だけ。",
       subtitleLine2: "あなた専用のAIモデルを作れるサービス。",
-      ctaPrimary: "無料で始める",
+      ctaPrimary: "始める",
       ctaSecondary: "使い方を見る",
       stat1: { value: "880", unit: "円〜", label: "1回あたり" },
       stat2: { value: "4", unit: "ステップ", label: "で完結" },
@@ -149,8 +149,8 @@ export const translations = {
     ctaSection: {
       titleLine1: "あなた専用のAIを、",
       titleLine2: "今すぐ作ろう",
-      subtitle: "アカウント登録は無料。最初の一歩を踏み出そう。",
-      button: "無料で始める",
+      subtitle: "最初の一歩を踏み出そう。",
+      button: "始める",
     },
     footer: {
       brand: "AIらくらくオーダーメイド",
@@ -178,7 +178,7 @@ export const translations = {
       titleLine2: "made for everyone",
       subtitleLine1: "No expertise needed. No GPU required. Just a simple UI.",
       subtitleLine2: "Build your own custom AI model.",
-      ctaPrimary: "Start for free",
+      ctaPrimary: "Start",
       ctaSecondary: "See how it works",
       stat1: { value: "$6", unit: "+", label: "per run" },
       stat2: { value: "4", unit: "steps", label: "to complete" },
@@ -308,8 +308,8 @@ export const translations = {
     ctaSection: {
       titleLine1: "Build your custom AI",
       titleLine2: "right now",
-      subtitle: "Free to sign up. Take the first step.",
-      button: "Start for free",
+      subtitle: "Take the first step.",
+      button: "Start",
     },
     footer: {
       brand: "AI Rakuraku",
