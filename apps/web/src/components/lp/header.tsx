@@ -35,11 +35,10 @@ export function Header({ locale }: { locale: Locale }) {
           </button>
           <Link
             href="/login"
-            className="text-xs text-zinc-400 cursor-pointer transition-colors duration-200 hover:text-white sm:text-sm"
+            className="rounded-md border border-white/[0.08] bg-white/[0.05] px-3 py-1 text-xs font-medium text-zinc-300 cursor-pointer transition-all duration-200 hover:border-white/[0.2] hover:bg-white/[0.1] hover:text-white sm:px-4 sm:py-1.5 sm:text-sm"
           >
             {text.login}
           </Link>
-
         </div>
       </nav>
     </header>
