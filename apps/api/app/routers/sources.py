@@ -1,7 +1,13 @@
 import logging
 from io import BytesIO
 
-import pymupdf
+# Conditional import for PyMuPDF (PDF support)
+try:
+    import pymupdf
+    PDF_SUPPORT_AVAILABLE = True
+except ImportError:
+    PDF_SUPPORT_AVAILABLE = False
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from supabase import Client
 
@@ -68,6 +74,11 @@ def _extract_text_from_bytes(filename: str, data: bytes) -> str:
             detail=f"Unsupported file extension: .{ext}. Allowed: {sorted(ALLOWED_EXTS)}",
         )
     if ext == "pdf":
+        if not PDF_SUPPORT_AVAILABLE:
+            raise HTTPException(
+                status_code=400,
+                detail="PDF processing not available. Please install pymupdf: pip install PyMuPDF"
+            )
         try:
             with pymupdf.open(stream=BytesIO(data), filetype="pdf") as doc:
                 return "\n\n".join(page.get_text() for page in doc)

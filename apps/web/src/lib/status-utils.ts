@@ -3,22 +3,17 @@ export type ProjectStatus = "created" | "training" | "completed" | "failed";
 export const getStatusBadgeColor = (status: ProjectStatus): string => {
   switch (status) {
     case "training":
-      return "bg-[#007aff]/10 text-[#007aff]";
+      return "bg-blue-100 text-blue-800";
     case "completed":
-      return "bg-[#34c759]/10 text-[#34c759]";
+      return "bg-green-100 text-green-800";
     case "failed":
-      return "bg-[#ff3b30]/10 text-[#ff3b30]";
+      return "bg-red-100 text-red-800";
     default:
-      return "bg-[var(--color-text-tertiary)]/10 text-[var(--color-text-secondary)]";
+      return "bg-gray-100 text-gray-800";
   }
 };
 
-export const getStatusLabel = (status: ProjectStatus, t?: (key: string) => string): string => {
-  if (t) {
-    const key = `status.${status}`;
-    return t(key);
-  }
-  // fallback to Japanese
+export const getStatusLabel = (status: ProjectStatus): string => {
   switch (status) {
     case "created":
       return "作成済み";

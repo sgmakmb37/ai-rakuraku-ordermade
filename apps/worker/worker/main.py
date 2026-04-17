@@ -111,7 +111,6 @@ class WorkerQueue:
         self.redis_url = redis_url or config.REDIS_URL
         self.client = redis.from_url(self.redis_url, decode_responses=True)
         self.queue_name = config.REDIS_QUEUE_NAME
-        self._supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 
     def get_job(self) -> Dict[str, Any] | None:
         """
@@ -134,7 +133,8 @@ class WorkerQueue:
             job_id: Job ID
             result: Result data
         """
-        self._supabase.table("training_jobs").update(
+        supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
+        supabase.table("training_jobs").update(
             {
                 "status": "done",
                 "finished_at": datetime.utcnow().isoformat(),
@@ -149,7 +149,8 @@ class WorkerQueue:
             job_id: Job ID
             error: Error message
         """
-        self._supabase.table("training_jobs").update(
+        supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
+        supabase.table("training_jobs").update(
             {
                 "status": "failed",
                 "error_message": error,
@@ -169,7 +170,7 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
         Result data
     """
     supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
-    job_id = job.get("id") or job.get("job_id")
+    job_id = job["id"]
     project_id = job["project_id"]
 
     try:
@@ -247,6 +248,7 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
         # 7. Get existing LoRA artifact if available, and download its files
         # to local path so PeftModel.from_pretrained can load them for resume.
         existing_lora_path = None
+        storage_path = ""  # Initialize storage_path before conditional block
         lora_artifacts_result = (
             supabase.table("lora_artifacts")
             .select("*")

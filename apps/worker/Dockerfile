@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Pinned llama.cpp release for reproducibility
-ARG LLAMA_CPP_REF=b3997
+ARG LLAMA_CPP_REF=b8746
 RUN git clone --depth 1 --branch ${LLAMA_CPP_REF} https://github.com/ggerganov/llama.cpp.git /opt/llama.cpp \
     && cd /opt/llama.cpp \
     && cmake -B build -DLLAMA_CURL=OFF -DGGML_NATIVE=OFF \
@@ -26,9 +26,8 @@ RUN git clone --depth 1 --branch ${LLAMA_CPP_REF} https://github.com/ggerganov/l
 ENV LLAMA_CPP_DIR=/opt/llama.cpp
 ENV PATH="/opt/llama.cpp/build/bin:${PATH}"
 
-# Use lock file for reproducible builds; fall back to requirements.txt
-COPY requirements.lock requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.lock || pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Cache bust: per-commit SHA to force COPY layer invalidation
 ARG BUILD_SHA=unknown

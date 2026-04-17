@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     frontend_url: str
     runpod_endpoint_id: str = ""
     runpod_api_key: str = ""
+    redis_queue_name: str = "training_jobs"
 
     class Config:
         env_file = ".env"

@@ -1,9 +1,8 @@
-import { createClient } from "@/lib/supabase/client";
-
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 async function fetchAPI(path: string, options: RequestInit = {}) {
   // Supabaseのセッショントークンを取得してAuthorizationヘッダーに付ける
+  const { createClient } = await import("@/lib/supabase/client");
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -25,6 +24,7 @@ async function fetchAPI(path: string, options: RequestInit = {}) {
 }
 
 async function fetchMultipart(path: string, formData: FormData) {
+  const { createClient } = await import("@/lib/supabase/client");
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 

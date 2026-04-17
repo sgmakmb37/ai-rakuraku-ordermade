@@ -26,6 +26,12 @@ build/
 # Supabase local
 /supabase/
 
+# Playwright
+reports/
+screenshots/
+auth-state.json
+test-results/
+
 # OS
 .DS_Store
 Thumbs.db

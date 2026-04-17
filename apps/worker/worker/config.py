@@ -10,7 +10,7 @@ class Config:
 
     RUNPOD_MODE = os.getenv("RUNPOD_MODE", "0") == "1"
 
-    REDIS_QUEUE_NAME = "gpu_jobs"
+    REDIS_QUEUE_NAME = os.getenv("REDIS_QUEUE_NAME", "training_jobs")
     JOB_TIMEOUT = 3600
     BATCH_SIZE = 4
     MAX_SEQ_LENGTH = 2048

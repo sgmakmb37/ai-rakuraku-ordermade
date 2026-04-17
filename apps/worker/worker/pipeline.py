@@ -20,6 +20,176 @@ from transformers import (
 from trl import SFTConfig, SFTTrainer
 
 
+def _setup_tokenizer_special_tokens(tokenizer, model_id: str, is_gemma: bool) -> None:
+    """
+    Configure special tokens for different model families with proper error handling.
+
+    Args:
+        tokenizer: The tokenizer instance to configure
+        model_id: The model identifier string
+        is_gemma: Whether this is a Gemma model
+    """
+    model_id_lower = model_id.lower()
+
+    # Determine model family for special token configuration
+    is_qwen = any(qwen_variant in model_id_lower for qwen_variant in ["qwen", "qwen2", "qwen2.5"])
+    is_llama = "llama" in model_id_lower
+    is_mistral = "mistral" in model_id_lower
+
+    try:
+        # Configure EOS token based on model family
+        eos_configured = False
+
+        if is_qwen:
+            # Qwen models commonly use <|im_end|> or <|endoftext|> depending on version
+            if hasattr(tokenizer, 'im_end_id') and tokenizer.im_end_id is not None:
+                # Qwen2.5 instruct models use <|im_end|> for conversations
+                if not tokenizer.eos_token or tokenizer.eos_token_id != tokenizer.im_end_id:
+                    tokenizer.eos_token = "<|im_end|>"
+                    eos_configured = True
+            elif "<|endoftext|>" in tokenizer.get_vocab():
+                # Base Qwen models often use <|endoftext|>
+                tokenizer.eos_token = "<|endoftext|>"
+                eos_configured = True
+            elif "</s>" in tokenizer.get_vocab():
+                # Fallback for some Qwen variants
+                tokenizer.eos_token = "</s>"
+                eos_configured = True
+
+        elif is_gemma:
+            # Gemma models use <end_of_turn> or <eos>
+            if "<end_of_turn>" in tokenizer.get_vocab():
+                tokenizer.eos_token = "<end_of_turn>"
+                eos_configured = True
+            elif "<eos>" in tokenizer.get_vocab():
+                tokenizer.eos_token = "<eos>"
+                eos_configured = True
+
+        elif is_llama or is_mistral:
+            # Llama and Mistral typically use </s>
+            if "</s>" in tokenizer.get_vocab():
+                tokenizer.eos_token = "</s>"
+                eos_configured = True
+
+        # Generic fallback if model-specific config failed
+        if not eos_configured:
+            vocab = tokenizer.get_vocab()
+            # Try common EOS tokens in order of preference
+            common_eos_tokens = ["</s>", "<|endoftext|>", "<eos>", "<end>"]
+            for candidate in common_eos_tokens:
+                if candidate in vocab:
+                    tokenizer.eos_token = candidate
+                    eos_configured = True
+                    break
+
+        # Final validation - ensure we have a valid EOS token
+        if not tokenizer.eos_token or tokenizer.eos_token == "<EOS_TOKEN>":
+            # Last resort: add a custom EOS token if none exists
+            if hasattr(tokenizer, 'add_special_tokens'):
+                special_tokens = {"eos_token": "</s>"}
+                tokenizer.add_special_tokens(special_tokens)
+                print(f"[WARNING] Added custom EOS token '</s>' for {model_id}", flush=True)
+            else:
+                # Force set a default
+                tokenizer.eos_token = "</s>"
+                print(f"[WARNING] Force-set EOS token '</s>' for {model_id}", flush=True)
+
+        # Configure padding token
+        if tokenizer.pad_token is None:
+            # Try using EOS token as pad token (common practice)
+            tokenizer.pad_token = tokenizer.eos_token
+
+            # For some models, we might need to add a dedicated pad token
+            if is_qwen and hasattr(tokenizer, 'add_special_tokens'):
+                # Some Qwen models work better with dedicated pad tokens
+                vocab = tokenizer.get_vocab()
+                if "<pad>" not in vocab and "<|pad|>" not in vocab:
+                    # Use EOS as pad is fine for most cases
+                    pass
+
+        # Verify configuration
+        if not tokenizer.eos_token:
+            raise ValueError(f"Failed to configure EOS token for {model_id}")
+        if not tokenizer.pad_token:
+            raise ValueError(f"Failed to configure PAD token for {model_id}")
+
+        print(
+            f"[TOKENIZER] {model_id} - EOS: '{tokenizer.eos_token}' "
+            f"(ID: {getattr(tokenizer, 'eos_token_id', 'N/A')}), "
+            f"PAD: '{tokenizer.pad_token}' "
+            f"(ID: {getattr(tokenizer, 'pad_token_id', 'N/A')})",
+            flush=True
+        )
+
+    except Exception as e:
+        print(f"[ERROR] Tokenizer setup failed for {model_id}: {e}", flush=True)
+        # Emergency fallback
+        tokenizer.eos_token = "</s>" if not tokenizer.eos_token else tokenizer.eos_token
+        tokenizer.pad_token = tokenizer.eos_token if not tokenizer.pad_token else tokenizer.pad_token
+        print(f"[FALLBACK] Using EOS='{tokenizer.eos_token}', PAD='{tokenizer.pad_token}'", flush=True)
+
+
+def _validate_tokenizer_config(tokenizer, model_id: str) -> None:
+    """
+    Validate tokenizer configuration before training starts.
+    Helps catch issues early rather than during training.
+
+    Args:
+        tokenizer: Configured tokenizer instance
+        model_id: Model identifier for error reporting
+    """
+    issues = []
+
+    # Check EOS token
+    if not tokenizer.eos_token:
+        issues.append("Missing EOS token")
+    elif tokenizer.eos_token == "<EOS_TOKEN>":
+        issues.append("EOS token not properly resolved (still <EOS_TOKEN>)")
+    else:
+        try:
+            # Test that EOS token can be encoded
+            eos_encoded = tokenizer.encode(tokenizer.eos_token, add_special_tokens=False)
+            if not eos_encoded:
+                issues.append(f"EOS token '{tokenizer.eos_token}' cannot be encoded")
+        except Exception as e:
+            issues.append(f"EOS token encoding failed: {e}")
+
+    # Check PAD token
+    if not tokenizer.pad_token:
+        issues.append("Missing PAD token")
+    else:
+        try:
+            # Test that PAD token can be encoded
+            pad_encoded = tokenizer.encode(tokenizer.pad_token, add_special_tokens=False)
+            if not pad_encoded:
+                issues.append(f"PAD token '{tokenizer.pad_token}' cannot be encoded")
+        except Exception as e:
+            issues.append(f"PAD token encoding failed: {e}")
+
+    # Check token IDs
+    if hasattr(tokenizer, 'eos_token_id') and tokenizer.eos_token_id is None:
+        issues.append("EOS token ID is None")
+    if hasattr(tokenizer, 'pad_token_id') and tokenizer.pad_token_id is None:
+        issues.append("PAD token ID is None")
+
+    # Test basic tokenization
+    try:
+        test_text = "Hello world"
+        encoded = tokenizer.encode(test_text)
+        decoded = tokenizer.decode(encoded, skip_special_tokens=True)
+        if not decoded.strip():
+            issues.append("Basic tokenization test failed - empty decode result")
+    except Exception as e:
+        issues.append(f"Basic tokenization test failed: {e}")
+
+    if issues:
+        error_msg = f"Tokenizer validation failed for {model_id}:\n" + "\n".join(f"- {issue}" for issue in issues)
+        print(f"[VALIDATION_ERROR] {error_msg}", flush=True)
+        raise ValueError(error_msg)
+
+    print(f"[VALIDATION_OK] Tokenizer configuration validated for {model_id}", flush=True)
+
+
 def extract_text(source_type: str, source: str) -> str:
     """
     Extract text from URL or file.
@@ -37,17 +207,17 @@ def extract_text(source_type: str, source: str) -> str:
         return text or ""
 
     # source_type == "file"
-    path = Path(source).resolve()
+    path = Path(source)
 
     if path.suffix.lower() == ".pdf":
-        with pymupdf.open(str(path)) as doc:
-            text = ""
-            for page in doc:
-                text += page.get_text()
-            return text
+        doc = pymupdf.open(source)
+        text = ""
+        for page in doc:
+            text += page.get_text()
+        return text
 
     # .txt, .csv, .json or other text formats
-    with open(path, "r", encoding="utf-8") as f:
+    with open(source, "r", encoding="utf-8") as f:
         return f.read()
 
 
@@ -161,14 +331,6 @@ def train_lora(
     Returns:
         Path to trained adapter
     """
-    # model_id のホワイトリスト検証（MODEL_ID_MAP値のみ許可）
-    ALLOWED_MODELS = {
-        "Qwen/Qwen2.5-1.5B", "Qwen/Qwen2.5-3B",
-        "google/gemma-4-E2B", "google/gemma-4-E4B",
-    }
-    if model_id not in ALLOWED_MODELS:
-        raise ValueError(f"Unknown model_id: {model_id}")
-
     is_gemma = "gemma" in model_id.lower()
 
     # Model-family-specific compute dtype: Gemma prefers bf16, fallback to fp16
@@ -185,15 +347,9 @@ def train_lora(
         model_id,
         trust_remote_code=True,
     )
-    if not tokenizer.eos_token or tokenizer.eos_token == "<EOS_TOKEN>":
-        if "qwen" in model_id.lower():
-            tokenizer.eos_token = "<|endoftext|>"
-        elif is_gemma:
-            tokenizer.eos_token = "<end_of_turn>"
-        else:
-            tokenizer.eos_token = "</s>"
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
+
+    # Enhanced EOS token configuration for model families
+    _setup_tokenizer_special_tokens(tokenizer, model_id, is_gemma)
 
     import sys
     import transformers as _tf
@@ -272,7 +428,13 @@ def train_lora(
         packing=False,
         dataset_text_field="text",
         report_to=[],
+        # Enhanced token configuration for better training stability
+        remove_unused_columns=True,
+        include_tokens_per_second=True,
     )
+    # Validate tokenizer configuration before training
+    _validate_tokenizer_config(tokenizer, model_id)
+
     trainer = SFTTrainer(
         model=model,
         processing_class=tokenizer,
@@ -326,10 +488,6 @@ def quantize_model(
     import subprocess
     import tempfile
 
-    ALLOWED_QUANT_TYPES = {"q4_k_m", "q5_k_m", "q8_0", "q4_0", "q4_1", "q5_0", "q5_1", "q2_k", "q3_k_m", "q6_k"}
-    if quant_type not in ALLOWED_QUANT_TYPES:
-        raise ValueError(f"Invalid quant_type: {quant_type}. Allowed: {ALLOWED_QUANT_TYPES}")
-
     llama_dir = os.getenv("LLAMA_CPP_DIR", "/opt/llama.cpp")
     convert_script = Path(llama_dir) / "convert_hf_to_gguf.py"
     quantize_bin = Path(llama_dir) / "build" / "bin" / "llama-quantize"
@@ -355,6 +513,10 @@ def quantize_model(
             trust_remote_code=True,
         )
         tokenizer = AutoTokenizer.from_pretrained(base_model_id, trust_remote_code=True)
+
+        # Ensure proper special tokens for quantization
+        is_gemma = "gemma" in base_model_id.lower()
+        _setup_tokenizer_special_tokens(tokenizer, base_model_id, is_gemma)
 
         print(f"[GGUF] applying LoRA from {adapter_path}", flush=True)
         merged = PeftModel.from_pretrained(base, adapter_path).merge_and_unload()

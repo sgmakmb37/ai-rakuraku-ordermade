@@ -10,6 +10,14 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.2'
+    volumes:
+      - redis_data:/data
 
   api:
     build: ./apps/api
@@ -22,9 +30,26 @@ services:
         condition: service_healthy
     volumes:
       - ./apps/api:/app
+      - api_logs:/var/log
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     environment:
       - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
 
   worker:
     build: ./apps/worker
@@ -35,5 +60,34 @@ services:
         condition: service_healthy
     volumes:
       - ./apps/worker:/app
+      - model_cache:/app/.cache/huggingface
+      - worker_logs:/var/log
     environment:
       - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379
+      - MODEL_CACHE_DIR=/app/.cache/huggingface
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r = redis.Redis(host='redis', port=6379); r.ping()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+
+volumes:
+  redis_data:
+    driver: local
+  model_cache:
+    driver: local
+  api_logs:
+    driver: local
+  worker_logs:
+    driver: local

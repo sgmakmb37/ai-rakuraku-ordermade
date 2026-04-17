@@ -9,7 +9,24 @@
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "cd apps/api && uvicorn app.main:app --reload --port 8000",
     "build:web": "npm run build --workspace=apps/web",
-    "lint:web": "npm run lint --workspace=apps/web"
+    "lint:web": "npm run lint --workspace=apps/web",
+    "test:e2e": "playwright test",
+    "test:e2e:dev": "playwright test --config=playwright-dev.config.ts",
+    "test:e2e:headed": "playwright test --headed --config=playwright-dev.config.ts",
+    "test:e2e:ui": "playwright test --ui --config=playwright-dev.config.ts",
+    "test:e2e:debug": "playwright test --debug --config=playwright-dev.config.ts",
+    "lighthouse": "lhci autorun",
+    "lighthouse:desktop": "lhci autorun --collect.settings.preset=desktop",
+    "lighthouse:mobile": "lhci autorun --collect.settings.preset=perf",
+    "lighthouse:ci": "lhci autorun --upload.target=temporary-public-storage",
+    "perf:test": "playwright test performance-tests/lighthouse.spec.ts",
+    "perf:analyze": "node performance-tests/analyze-bundle.js",
+    "perf:full": "npm run build:web && npm run perf:analyze && npm run lighthouse"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@lhci/cli": "^0.15.0",
+    "playwright-lighthouse": "^4.0.0"
   },
   "engines": {
     "node": ">=18"

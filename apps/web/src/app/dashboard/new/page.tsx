@@ -4,9 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useLocale } from "@/lib/i18n";
-import { Nav } from "@/components/nav";
-import { Spinner } from "@/components/spinner";
-import { ChevronLeft, Plus, X, Upload, FileText } from "lucide-react";
+import { ChevronLeft, Plus, X, Upload } from "lucide-react";
 
 type Step = 1 | 2 | 3 | 4;
 
