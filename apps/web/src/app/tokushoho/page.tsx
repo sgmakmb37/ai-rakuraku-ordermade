@@ -49,7 +49,7 @@ function TokushohoJa() {
             <Row label="サービスURL" value="https://ai-rakuraku.jp" />
             <Row
               label="販売価格"
-              value="標準プラン: 880円/回、高速プラン: 1,430円/回（税込）"
+              value="標準プラン: 880円（$6 USD）/回、高速プラン: 1,430円（$10 USD）/回（税込）"
             />
             <Row
               label="販売価格以外の必要料金"
@@ -101,7 +101,7 @@ function TokushohoEn() {
             <Row label="Service URL" value="https://ai-rakuraku.jp" />
             <Row
               label="Pricing"
-              value="Standard: &yen;880 / run, Fast: &yen;1,430 / run (tax included)"
+              value="Standard: &yen;880 ($6 USD) / run, Fast: &yen;1,430 ($10 USD) / run (tax included)"
             />
             <Row
               label="Additional costs"
