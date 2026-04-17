@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useLocale } from "@/lib/i18n";
-import { ChevronLeft, Plus, X, Upload } from "lucide-react";
+import { ChevronLeft, Plus, X, Upload, Globe } from "lucide-react";
 import Link from "next/link";
 
 type Step = 1 | 2 | 3 | 4;
@@ -40,8 +40,15 @@ const STEP_LABEL_KEYS = [
   "new.stepLabels.confirmStart",
 ];
 
+const MODEL_KEY_MAP: Record<ModelType, string> = {
+  "qwen2.5-1.5b": "qwen25_15b",
+  "qwen2.5-3b": "qwen25_3b",
+  "gemma-4-e2b": "gemma4_e2b",
+  "gemma-4-e4b": "gemma4_e4b",
+};
+
 export default function NewProjectPage() {
-  const { t } = useLocale();
+  const { t, locale, setLocale } = useLocale();
   const router = useRouter();
   const GENRES = GENRE_KEYS.map((key) => t(key));
   const STEP_LABELS = STEP_LABEL_KEYS.map((key) => t(key));
@@ -219,7 +226,7 @@ export default function NewProjectPage() {
   };
 
   const sourceCount = formData.urls.length + formData.files.length;
-  const modelLabel = t(`new.models.${formData.modelType}.label`);
+  const modelLabel = t(`new.models.${MODEL_KEY_MAP[formData.modelType]}.label`);
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -229,10 +236,17 @@ export default function NewProjectPage() {
           <Link href="/" className="logo-text text-lg font-bold cursor-pointer sm:text-xl">AI Rakuraku</Link>
           <div className="flex items-center gap-4">
             <button
+              onClick={() => setLocale(locale === "ja" ? "en" : "ja")}
+              className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-xs text-zinc-400 cursor-pointer transition-colors duration-200 hover:border-white/[0.15] hover:text-white"
+            >
+              <Globe size={13} />
+              {locale === "ja" ? "EN" : "JP"}
+            </button>
+            <button
               onClick={() => router.push("/dashboard")}
               className="text-sm text-zinc-400 cursor-pointer hover:text-white transition-colors"
             >
-              ← ダッシュボード
+              {"← " + t("detail.backToDashboard")}
             </button>
           </div>
         </nav>
@@ -311,13 +325,13 @@ export default function NewProjectPage() {
                   onChange={handleModelChange}
                   className="w-full rounded-lg border border-white/[0.08] bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 cursor-pointer"
                 >
-                  <option value="qwen2.5-1.5b">{t("new.models.qwen2.5-1.5b.label")}</option>
-                  <option value="qwen2.5-3b">{t("new.models.qwen2.5-3b.label")}</option>
-                  <option value="gemma-4-e2b">{t("new.models.gemma-4-e2b.label")}</option>
-                  <option value="gemma-4-e4b">{t("new.models.gemma-4-e4b.label")}</option>
+                  <option value="qwen2.5-1.5b">{t("new.models.qwen25_15b.label")}</option>
+                  <option value="qwen2.5-3b">{t("new.models.qwen25_3b.label")}</option>
+                  <option value="gemma-4-e2b">{t("new.models.gemma4_e2b.label")}</option>
+                  <option value="gemma-4-e4b">{t("new.models.gemma4_e4b.label")}</option>
                 </select>
                 <p className="text-sm text-zinc-400 mt-3">
-                  {t(`new.models.${formData.modelType}.desc`)}
+                  {t(`new.models.${MODEL_KEY_MAP[formData.modelType]}.desc`)}
                 </p>
               </div>
             </div>

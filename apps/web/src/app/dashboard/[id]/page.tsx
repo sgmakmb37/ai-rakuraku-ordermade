@@ -5,6 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { getStatusBadgeColor, getStatusLabel, type ProjectStatus } from "@/lib/status-utils";
+import { useLocale } from "@/lib/i18n";
+import { Globe } from "lucide-react";
 
 interface ProjectDetail {
   id: string;
@@ -36,19 +38,6 @@ const getHistoryStatusColor = (
   }
 };
 
-const getHistoryStatusLabel = (
-  status: "success" | "in_progress" | "failed"
-) => {
-  switch (status) {
-    case "success":
-      return "成功";
-    case "in_progress":
-      return "進行中";
-    case "failed":
-      return "失敗";
-  }
-};
-
 export default function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -59,6 +48,7 @@ export default function ProjectDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const { t, locale, setLocale } = useLocale();
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -90,7 +80,7 @@ export default function ProjectDetailPage() {
           setHistory([]);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "プロジェクトの取得に失敗しました");
+        setError(err instanceof Error ? err.message : t("detail.errorFetch"));
       } finally {
         setIsLoading(false);
       }
@@ -113,7 +103,7 @@ export default function ProjectDetailPage() {
         }
       }
     } catch {
-      alert("追加学習の開始に失敗しました。もう一度お試しください。");
+      alert(t("detail.errorAddTraining"));
     } finally {
       setIsActionLoading(false);
     }
@@ -121,18 +111,18 @@ export default function ProjectDetailPage() {
 
   const handleReset = async () => {
     const confirmed = window.confirm(
-      "現在の学習内容をリセットする。元に戻せないが実行するか？"
+      t("detail.resetConfirm")
     );
     if (!confirmed) return;
 
     try {
       setIsActionLoading(true);
       await api.resetProject(projectId);
-      alert("プロジェクトをリセットしました");
+      alert(t("detail.resetSuccess"));
       // リセット後、ページをリロードして最新データを取得
       window.location.reload();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "リセットに失敗しました");
+      alert(err instanceof Error ? err.message : t("detail.errorReset"));
     } finally {
       setIsActionLoading(false);
     }
@@ -147,7 +137,7 @@ export default function ProjectDetailPage() {
         window.location.href = response.download_url;
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "ダウンロードに失敗しました");
+      alert(err instanceof Error ? err.message : t("detail.errorDownload"));
     } finally {
       setIsActionLoading(false);
     }
@@ -158,7 +148,7 @@ export default function ProjectDetailPage() {
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-          <p className="text-sm text-zinc-400">読み込み中...</p>
+          <p className="text-sm text-zinc-400">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -167,12 +157,12 @@ export default function ProjectDetailPage() {
   if (error || !project) {
     return (
       <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4">
-        <p className="text-sm text-red-400">{error || "プロジェクトが見つかりません"}</p>
+        <p className="text-sm text-red-400">{error || t("detail.errorNotFound")}</p>
         <button
           onClick={() => router.push("/dashboard")}
           className="rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110"
         >
-          ダッシュボードに戻る
+          {t("detail.backToDashboard")}
         </button>
       </div>
     );
@@ -186,10 +176,17 @@ export default function ProjectDetailPage() {
           <Link href="/" className="logo-text text-lg font-bold cursor-pointer sm:text-xl">AI Rakuraku</Link>
           <div className="flex items-center gap-4">
             <button
+              onClick={() => setLocale(locale === "ja" ? "en" : "ja")}
+              className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-xs text-zinc-400 cursor-pointer transition-colors duration-200 hover:border-white/[0.15] hover:text-white"
+            >
+              <Globe size={13} />
+              {locale === "ja" ? "EN" : "JP"}
+            </button>
+            <button
               onClick={() => router.push("/dashboard")}
               className="text-sm text-zinc-400 cursor-pointer hover:text-white transition-colors"
             >
-              ← ダッシュボード
+              {"← " + t("detail.backToDashboard")}
             </button>
           </div>
         </nav>
@@ -211,35 +208,35 @@ export default function ProjectDetailPage() {
                 project.status
               )}`}
             >
-              {getStatusLabel(project.status)}
+              {t("status." + project.status)}
             </span>
           </div>
 
           {/* Project Details Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-6 pb-6 border-b border-white/[0.06]">
             <div>
-              <p className="text-xs text-zinc-500 mb-1">ジャンル</p>
+              <p className="text-xs text-zinc-500 mb-1">{t("detail.genre")}</p>
               <p className="text-base font-semibold text-white">
                 {project.genre}
               </p>
             </div>
             <div>
-              <p className="text-xs text-zinc-500 mb-1">作成日</p>
+              <p className="text-xs text-zinc-500 mb-1">{t("detail.createdDate")}</p>
               <p className="text-base font-semibold text-white">
-                {new Date(project.created_at).toLocaleDateString("ja-JP")}
+                {new Date(project.created_at).toLocaleDateString(locale === "ja" ? "ja-JP" : "en-US")}
               </p>
             </div>
             <div>
-              <p className="text-xs text-zinc-500 mb-1">残り日数</p>
+              <p className="text-xs text-zinc-500 mb-1">{t("detail.daysLeft")}</p>
               <p className="text-base font-semibold text-white">
-                あと{project.days_until_deletion}日
+                {t("dashboard.daysLeft", { n: project.days_until_deletion })}
               </p>
             </div>
           </div>
 
           {/* Purpose */}
           <div>
-            <p className="text-xs text-zinc-500 mb-2">用途説明</p>
+            <p className="text-xs text-zinc-500 mb-2">{t("detail.purpose")}</p>
             <p className="text-sm text-zinc-300">{project.description}</p>
           </div>
         </div>
@@ -251,39 +248,39 @@ export default function ProjectDetailPage() {
             disabled={isActionLoading}
             className="rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isActionLoading ? "処理中..." : "追加学習"}
+            {isActionLoading ? t("detail.processing") : t("detail.addTraining")}
           </button>
           <button
             onClick={handleReset}
             disabled={isActionLoading}
             className="rounded-lg bg-red-600/80 px-4 py-2 text-sm font-medium text-white cursor-pointer hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isActionLoading ? "処理中..." : "リセット"}
+            {isActionLoading ? t("detail.processing") : t("detail.reset")}
           </button>
           <button
             onClick={handleDownload}
             disabled={isActionLoading}
             className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-6 py-2.5 text-sm font-medium text-zinc-300 cursor-pointer transition-all duration-300 hover:border-white/[0.2] hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isActionLoading ? "処理中..." : "ダウンロード"}
+            {isActionLoading ? t("detail.processing") : t("detail.download")}
           </button>
         </div>
 
         {/* Learning History */}
         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
-          <h3 className="text-lg font-bold text-white mb-6">学習履歴</h3>
+          <h3 className="text-lg font-bold text-white mb-6">{t("detail.history")}</h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/[0.06]">
                   <th className="text-left py-3 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                    バージョン
+                    {t("detail.version")}
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                    日時
+                    {t("detail.date")}
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                    ステータス
+                    {t("detail.status")}
                   </th>
                 </tr>
               </thead>
@@ -297,7 +294,7 @@ export default function ProjectDetailPage() {
                       {entry.version}
                     </td>
                     <td className="py-4 px-4 text-sm text-zinc-400">
-                      {new Date(entry.timestamp).toLocaleString("ja-JP")}
+                      {new Date(entry.timestamp).toLocaleString(locale === "ja" ? "ja-JP" : "en-US")}
                     </td>
                     <td className="py-4 px-4">
                       <span
@@ -305,7 +302,7 @@ export default function ProjectDetailPage() {
                           entry.status
                         )}`}
                       >
-                        {getHistoryStatusLabel(entry.status)}
+                        {t("status." + entry.status)}
                       </span>
                     </td>
                   </tr>

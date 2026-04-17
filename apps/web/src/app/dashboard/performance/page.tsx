@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { WEB_VITAL_THRESHOLDS } from '@/lib/web-vitals';
+import { useLocale } from "@/lib/i18n";
+import { Globe } from "lucide-react";
 
 interface PerformanceStats {
   lcp: { value: number; rating: string; samples: number };
@@ -17,6 +19,7 @@ export default function PerformancePage() {
   const router = useRouter();
   const [stats, setStats] = useState<PerformanceStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { t, locale, setLocale } = useLocale();
 
   useEffect(() => {
     // Mock data for demonstration
@@ -59,7 +62,7 @@ export default function PerformancePage() {
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-          <p className="text-sm text-zinc-400">パフォーマンス データを読み込み中...</p>
+          <p className="text-sm text-zinc-400">{t("performance.loading")}</p>
         </div>
       </div>
     );
@@ -73,10 +76,17 @@ export default function PerformancePage() {
           <Link href="/" className="logo-text text-lg font-bold cursor-pointer sm:text-xl">AI Rakuraku</Link>
           <div className="flex items-center gap-4">
             <button
+              onClick={() => setLocale(locale === "ja" ? "en" : "ja")}
+              className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-xs text-zinc-400 cursor-pointer transition-colors duration-200 hover:border-white/[0.15] hover:text-white"
+            >
+              <Globe size={13} />
+              {locale === "ja" ? "EN" : "JP"}
+            </button>
+            <button
               onClick={() => router.push("/dashboard")}
               className="text-sm text-zinc-400 cursor-pointer hover:text-white transition-colors"
             >
-              ← ダッシュボード
+              {"← " + t("detail.backToDashboard")}
             </button>
           </div>
         </nav>
@@ -86,13 +96,13 @@ export default function PerformancePage() {
       <main className="mx-auto max-w-5xl px-5 py-8 sm:px-6">
         {/* Page Title */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">パフォーマンス監視</h1>
-          <p className="text-sm text-zinc-400 mt-1">Core Web Vitals とページパフォーマンス指標</p>
+          <h1 className="text-2xl font-bold text-white">{t("performance.title")}</h1>
+          <p className="text-sm text-zinc-400 mt-1">{t("performance.subtitle")}</p>
         </div>
 
         {/* Core Web Vitals */}
         <section className="mb-8">
-          <h2 className="text-lg font-bold text-white mb-4">Core Web Vitals</h2>
+          <h2 className="text-lg font-bold text-white mb-4">{t("performance.coreWebVitals")}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             {/* Largest Contentful Paint */}
@@ -110,11 +120,11 @@ export default function PerformancePage() {
                 {stats ? formatValue('LCP', stats.lcp.value) : '---'}
               </div>
               <div className="text-xs text-zinc-500 mb-4">
-                {stats?.lcp.samples || 0} サンプル
+                {t("performance.samples", { n: stats?.lcp.samples || 0 })}
               </div>
               <div className="space-y-1 text-xs text-zinc-500">
-                <div>良好: ≤ {getThresholds('LCP').good}ms</div>
-                <div>要改善: ≤ {getThresholds('LCP').needsImprovement}ms</div>
+                <div>{locale === "ja" ? "良好" : "Good"}: ≤ {getThresholds('LCP').good}ms</div>
+                <div>{locale === "ja" ? "要改善" : "Needs improvement"}: ≤ {getThresholds('LCP').needsImprovement}ms</div>
               </div>
             </div>
 
@@ -133,11 +143,11 @@ export default function PerformancePage() {
                 {stats ? formatValue('FID', stats.fid.value) : '---'}
               </div>
               <div className="text-xs text-zinc-500 mb-4">
-                {stats?.fid.samples || 0} サンプル
+                {t("performance.samples", { n: stats?.fid.samples || 0 })}
               </div>
               <div className="space-y-1 text-xs text-zinc-500">
-                <div>良好: ≤ {getThresholds('FID').good}ms</div>
-                <div>要改善: ≤ {getThresholds('FID').needsImprovement}ms</div>
+                <div>{locale === "ja" ? "良好" : "Good"}: ≤ {getThresholds('FID').good}ms</div>
+                <div>{locale === "ja" ? "要改善" : "Needs improvement"}: ≤ {getThresholds('FID').needsImprovement}ms</div>
               </div>
             </div>
 
@@ -156,11 +166,11 @@ export default function PerformancePage() {
                 {stats ? formatValue('CLS', stats.cls.value) : '---'}
               </div>
               <div className="text-xs text-zinc-500 mb-4">
-                {stats?.cls.samples || 0} サンプル
+                {t("performance.samples", { n: stats?.cls.samples || 0 })}
               </div>
               <div className="space-y-1 text-xs text-zinc-500">
-                <div>良好: ≤ {getThresholds('CLS').good}</div>
-                <div>要改善: ≤ {getThresholds('CLS').needsImprovement}</div>
+                <div>{locale === "ja" ? "良好" : "Good"}: ≤ {getThresholds('CLS').good}</div>
+                <div>{locale === "ja" ? "要改善" : "Needs improvement"}: ≤ {getThresholds('CLS').needsImprovement}</div>
               </div>
             </div>
           </div>
@@ -168,7 +178,7 @@ export default function PerformancePage() {
 
         {/* Additional Metrics */}
         <section className="mb-8">
-          <h2 className="text-lg font-bold text-white mb-4">その他の指標</h2>
+          <h2 className="text-lg font-bold text-white mb-4">{t("performance.otherMetrics")}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* First Contentful Paint */}
@@ -186,7 +196,7 @@ export default function PerformancePage() {
                 {stats ? formatValue('FCP', stats.fcp.value) : '---'}
               </div>
               <div className="text-xs text-zinc-500">
-                {stats?.fcp.samples || 0} サンプル
+                {t("performance.samples", { n: stats?.fcp.samples || 0 })}
               </div>
             </div>
 
@@ -205,7 +215,7 @@ export default function PerformancePage() {
                 {stats ? formatValue('TTFB', stats.ttfb.value) : '---'}
               </div>
               <div className="text-xs text-zinc-500">
-                {stats?.ttfb.samples || 0} サンプル
+                {t("performance.samples", { n: stats?.ttfb.samples || 0 })}
               </div>
             </div>
           </div>
@@ -215,12 +225,12 @@ export default function PerformancePage() {
         <section>
           <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.04] p-6">
             <h3 className="text-base font-bold text-white mb-3">
-              パフォーマンス最適化のヒント
+              {t("performance.tipsTitle")}
             </h3>
             <ul className="text-sm text-zinc-400 space-y-2">
-              <li>• LCP: 画像最適化、フォント読み込み最適化、サーバーレスポンス時間改善</li>
-              <li>• FID: JavaScriptコード分割、非同期処理、Web Workers利用</li>
-              <li>• CLS: 画像・動画サイズ指定、フォント表示最適化、動的コンテンツの事前確保</li>
+              <li>{"• " + t("performance.tipsLcp")}</li>
+              <li>{"• " + t("performance.tipsFid")}</li>
+              <li>{"• " + t("performance.tipsCls")}</li>
             </ul>
           </div>
         </section>

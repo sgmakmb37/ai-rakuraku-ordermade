@@ -7,7 +7,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
-import { getStatusBadgeColor, getStatusLabel, type ProjectStatus } from "@/lib/status-utils";
+import { getStatusBadgeColor, type ProjectStatus } from "@/lib/status-utils";
+import { useLocale } from "@/lib/i18n";
+import { Globe } from "lucide-react";
 
 interface Project {
   id: string;
@@ -34,6 +36,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLogoutLoading, setIsLogoutLoading] = useState(false);
+  const { t, locale, setLocale } = useLocale();
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -51,7 +54,7 @@ export default function DashboardPage() {
         }));
         setProjects(transformedProjects);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "プロジェクトの取得に失敗しました");
+        setError(err instanceof Error ? err.message : t("dashboard.errorFetch"));
       } finally {
         setIsLoading(false);
       }
@@ -66,7 +69,7 @@ export default function DashboardPage() {
       await supabase.auth.signOut();
       router.push("/login");
     } catch (error) {
-      console.error("ログアウトエラー:", error);
+      console.error("logout error:", error);
     } finally {
       setIsLogoutLoading(false);
     }
@@ -93,11 +96,18 @@ export default function DashboardPage() {
           <Link href="/" className="logo-text text-lg font-bold cursor-pointer sm:text-xl">AI Rakuraku</Link>
           <div className="flex items-center gap-4">
             <button
+              onClick={() => setLocale(locale === "ja" ? "en" : "ja")}
+              className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-xs text-zinc-400 cursor-pointer transition-colors duration-200 hover:border-white/[0.15] hover:text-white"
+            >
+              <Globe size={13} />
+              {locale === "ja" ? "EN" : "JP"}
+            </button>
+            <button
               onClick={handleLogout}
               disabled={isLogoutLoading}
               className="text-sm text-zinc-400 cursor-pointer hover:text-white transition-colors disabled:opacity-50"
             >
-              {isLogoutLoading ? "ログアウト中..." : "Logout"}
+              {isLogoutLoading ? t("dashboard.loggingOut") : t("common.logout")}
             </button>
           </div>
         </nav>
@@ -108,7 +118,7 @@ export default function DashboardPage() {
         {/* Top Section with New Project Button */}
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-xl font-bold text-white">
-            プロジェクト一覧
+            {t("dashboard.projectList")}
           </h2>
           <button
             onClick={handleNewProject}
@@ -119,7 +129,7 @@ export default function DashboardPage() {
                 : "rounded-lg border border-white/[0.1] bg-white/[0.03] px-6 py-2.5 text-sm font-medium text-zinc-500 cursor-not-allowed"
             }
           >
-            {canCreateNewProject ? "新規作成" : "上限に達しています"}
+            {canCreateNewProject ? t("dashboard.newProject") : t("dashboard.limitReached")}
           </button>
         </div>
 
@@ -128,7 +138,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              <p className="text-sm text-zinc-400">読み込み中...</p>
+              <p className="text-sm text-zinc-400">{t("common.loading")}</p>
             </div>
           </div>
         ) : error ? (
@@ -138,17 +148,17 @@ export default function DashboardPage() {
               onClick={() => window.location.reload()}
               className="rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110"
             >
-              リトライ
+              {t("common.retry")}
             </button>
           </div>
         ) : projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
-            <p className="text-sm text-zinc-400 mb-4">まだプロジェクトがありません</p>
+            <p className="text-sm text-zinc-400 mb-4">{t("dashboard.empty")}</p>
             <button
               onClick={handleNewProject}
               className="rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110"
             >
-              最初のプロジェクトを作成
+              {t("dashboard.createFirst")}
             </button>
           </div>
         ) : (
@@ -172,22 +182,22 @@ export default function DashboardPage() {
                       project.status
                     )}`}
                   >
-                    {getStatusLabel(project.status)}
+                    {t("status." + project.status)}
                   </span>
                 </div>
 
                 {/* Meta Information */}
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm text-zinc-400">残り日数</span>
+                    <span className="text-sm text-zinc-400">{t("dashboard.remainingDays")}</span>
                     <span className="text-sm text-zinc-300 font-medium">
-                      あと{project.days_until_deletion}日で削除
+                      {t("dashboard.daysUntilDeletion", { n: project.days_until_deletion })}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-zinc-400">作成日</span>
+                    <span className="text-sm text-zinc-400">{t("dashboard.created")}</span>
                     <span className="text-sm text-zinc-300 font-medium">
-                      {new Date(project.created_at).toLocaleDateString("ja-JP")}
+                      {new Date(project.created_at).toLocaleDateString(locale === "ja" ? "ja-JP" : "en-US")}
                     </span>
                   </div>
                 </div>
@@ -195,7 +205,7 @@ export default function DashboardPage() {
                 {/* Footer */}
                 <div className="mt-4 pt-4 border-t border-white/[0.06]">
                   <p className="text-xs text-zinc-500">
-                    クリックして詳細を表示
+                    {t("dashboard.clickToView")}
                   </p>
                 </div>
               </div>
