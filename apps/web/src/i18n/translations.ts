@@ -154,6 +154,7 @@ export const translations = {
     },
     footer: {
       brand: "AIらくらくオーダーメイド",
+      tokushoho: "特定商取引法に基づく表記",
       terms: "利用規約",
       privacy: "プライバシーポリシー",
       contact: "お問い合わせ",
@@ -313,6 +314,7 @@ export const translations = {
     },
     footer: {
       brand: "AI Rakuraku",
+      tokushoho: "Commercial Transactions Act",
       terms: "Terms of Service",
       privacy: "Privacy Policy",
       contact: "Contact",

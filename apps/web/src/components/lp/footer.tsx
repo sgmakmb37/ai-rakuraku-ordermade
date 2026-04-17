@@ -18,6 +18,12 @@ export function Footer({ locale }: { locale: Locale }) {
           </Link>
           <div className="flex gap-6 sm:gap-8">
             <Link
+              href="/tokushoho"
+              className="text-xs text-zinc-500 cursor-pointer transition-colors duration-200 hover:text-zinc-300 sm:text-sm"
+            >
+              {text.tokushoho}
+            </Link>
+            <Link
               href="/terms"
               className="text-xs text-zinc-500 cursor-pointer transition-colors duration-200 hover:text-zinc-300 sm:text-sm"
             >

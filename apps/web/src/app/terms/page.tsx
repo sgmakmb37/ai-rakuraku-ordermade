@@ -333,47 +333,13 @@ function TermsJa() {
         </li>
       </ol>
 
-      {/* 特定商取引法に基づく表記 */}
-      <h2 className="mt-14 border-t border-white/[0.06] pt-10 text-lg font-semibold text-white sm:text-xl">
-        特定商取引法に基づく表記
-      </h2>
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full text-sm">
-          <tbody>
-            <Row label="事業者名" value="やすい ともき" />
-            <Row
-              label="所在地"
-              value="請求があった場合に遅滞なく開示いたします"
-            />
-            <Row
-              label="電話番号"
-              value="請求があった場合に遅滞なく開示いたします"
-            />
-            <Row label="メールアドレス" value="contact@airakuraku.jp" />
-            <Row
-              label="販売価格"
-              value="標準プラン: 880円/回、高速プラン: 1,430円/回（税込）"
-            />
-            <Row
-              label="販売価格以外の必要料金"
-              value="インターネット接続に必要な通信料等はユーザー負担"
-            />
-            <Row label="支払方法" value="クレジットカード（Stripe経由）" />
-            <Row label="支払時期" value="注文確定時に即時決済" />
-            <Row
-              label="商品の引渡し時期"
-              value="決済完了後、学習処理完了時にダウンロード可能（標準: 90〜120分、高速: 35〜55分）"
-            />
-            <Row
-              label="返品・キャンセル"
-              value="デジタルコンテンツの性質上、決済完了後のキャンセル・返金は不可。システム障害等による処理未完了の場合に限り全額返金。"
-            />
-            <Row
-              label="動作環境"
-              value="最新版のChrome、Safari、Edge、Firefox推奨。インターネット接続必須。"
-            />
-          </tbody>
-        </table>
+      <div className="mt-14 border-t border-white/[0.06] pt-10">
+        <a
+          href="/tokushoho"
+          className="text-sm text-blue-400 underline underline-offset-2 hover:text-blue-300"
+        >
+          特定商取引法に基づく表記
+        </a>
       </div>
 
       <p className="mt-8 text-xs text-zinc-600">
@@ -655,44 +621,13 @@ function TermsEn() {
         </li>
       </ol>
 
-      {/* Specified Commercial Transactions Act */}
-      <h2 className="mt-14 border-t border-white/[0.06] pt-10 text-lg font-semibold text-white sm:text-xl">
-        Disclosure under the Specified Commercial Transactions Act (Japan)
-      </h2>
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full text-sm">
-          <tbody>
-            <Row label="Operator" value="Tomoki Yasui" />
-            <Row
-              label="Address"
-              value="Disclosed upon request without delay"
-            />
-            <Row label="Phone" value="Disclosed upon request without delay" />
-            <Row label="Email" value="contact@airakuraku.jp" />
-            <Row
-              label="Pricing"
-              value="Standard: ¥880 ($6) / run, Fast: ¥1,430 ($10) / run (tax included)"
-            />
-            <Row
-              label="Additional costs"
-              value="Internet connection fees are borne by the user"
-            />
-            <Row label="Payment method" value="Credit card (via Stripe)" />
-            <Row label="Payment timing" value="Charged at order confirmation" />
-            <Row
-              label="Delivery"
-              value="Available for download upon completion (Standard: 90–120 min, Fast: 35–55 min)"
-            />
-            <Row
-              label="Returns / Cancellation"
-              value="No cancellations or refunds after payment is completed (digital content). Full refund only if processing fails due to system error."
-            />
-            <Row
-              label="System requirements"
-              value="Latest Chrome, Safari, Edge, or Firefox. Internet connection required."
-            />
-          </tbody>
-        </table>
+      <div className="mt-14 border-t border-white/[0.06] pt-10">
+        <a
+          href="/tokushoho"
+          className="text-sm text-blue-400 underline underline-offset-2 hover:text-blue-300"
+        >
+          Specified Commercial Transactions Act Disclosure
+        </a>
       </div>
 
       <p className="mt-8 text-xs text-zinc-600">Effective: April 17, 2026</p>
@@ -700,17 +635,3 @@ function TermsEn() {
   );
 }
 
-/* ────────────────────────────── Shared ──────────────────────────────── */
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <tr>
-      <th className="border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-left align-top font-medium text-zinc-300 whitespace-nowrap">
-        {label}
-      </th>
-      <td className="border border-white/[0.06] px-4 py-2.5 text-zinc-400">
-        {value}
-      </td>
-    </tr>
-  );
-}
