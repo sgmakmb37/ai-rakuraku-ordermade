@@ -19,6 +19,12 @@ interface ProjectDetail {
   days_until_deletion: number;
 }
 
+function calcDaysLeft(expiresAt: string | undefined): number {
+  if (!expiresAt) return 0;
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / 86_400_000));
+}
+
 interface HistoryEntry {
   version: string;
   timestamp: string;
@@ -64,7 +70,7 @@ export default function ProjectDetailPage() {
           description: data.description,
           status: data.status,
           created_at: data.created_at,
-          days_until_deletion: data.days_until_deletion,
+          days_until_deletion: calcDaysLeft(data.expires_at),
         });
         // 学習履歴を取得
         try {

@@ -26,7 +26,13 @@ interface ApiProject {
   model_type: string;
   status: string;
   created_at: string;
-  days_until_deletion: number;
+  expires_at: string;
+}
+
+function calcDaysLeft(expiresAt: string | undefined): number {
+  if (!expiresAt) return 0;
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / 86_400_000));
 }
 
 export default function DashboardPage() {
@@ -50,7 +56,7 @@ export default function DashboardPage() {
           model_type: p.model_type,
           status: p.status as ProjectStatus,
           created_at: p.created_at,
-          days_until_deletion: p.days_until_deletion,
+          days_until_deletion: calcDaysLeft(p.expires_at),
         }));
         setProjects(transformedProjects);
       } catch (err) {

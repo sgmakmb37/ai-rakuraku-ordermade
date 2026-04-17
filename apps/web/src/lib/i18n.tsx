@@ -429,7 +429,7 @@ function getNestedValue(obj: Record<string, unknown>, key: string): string {
 
 function interpolate(template: string, params: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, k) =>
-    k in params ? String(params[k]) : `{${k}}`
+    k in params && params[k] != null ? String(params[k]) : ""
   );
 }
 
