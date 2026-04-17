@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 ## Communication
 
 - 日本語で会話する。英語は技術用語のみ許可
@@ -9,57 +11,79 @@
 
 ---
 
-## Core Principles（最優先）
+## Architecture
 
-- **Simplicity First**: 変更は可能な限りシンプルに。影響範囲を最小化する
-- **No Laziness**: 根本原因を探す。一時的な修正禁止。シニアエンジニア基準
-- **Minimal Impact**: 必要な箇所だけ触る。バグを持ち込まない
-- **Staff Engineer Test**: 「スタッフエンジニアがこれを承認するか？」を常に自問する
+モノレポ構成。4つのパッケージで構成:
+
+| Package | Stack | Purpose |
+|---------|-------|---------|
+| `apps/web` | Next.js 16 (App Router) + TypeScript + Tailwind v4 | LP + ダッシュボード |
+| `apps/api` | FastAPI + Python 3.11+ | REST API、Stripe決済、ジョブ管理 |
+| `apps/worker` | Python 3.10+ + PyTorch + TRL 0.18.2 | GPU学習ワーカー（RunPod Serverless） |
+| `packages/shared` | TypeScript | 型定義・定数 |
+
+### Key Flows
+
+**決済→学習フロー:**
+1. `/payments/checkout` → Stripe Checkout Session作成（880円、JPY zero-decimal）
+2. Stripe Webhook (`checkout.session.completed`) → 金額検証 → training_jobs作成 → RunPod/Redis投入
+3. `/train` エンドポイントは決済確認済みのプロジェクトのみ実行可
+
+**i18n 2系統:**
+- LP: cookie + Next.js middleware (`src/i18n/translations.ts`)
+- ダッシュボード: React Context + `useLocale()` (`src/lib/i18n.tsx`)
+
+### Infrastructure
+
+- Deploy: Vercel (web) / Render (api) / RunPod Serverless (worker)
+- DB: Supabase (PostgreSQL + Auth + Storage)
+- Cache: Upstash Redis
+- Payment: Stripe (inline price_data, JPY zero-decimal)
 
 ---
 
-## Development Stance（開発姿勢）
+## Build & Dev Commands
 
-### Demand Elegance (Balanced)
-- 非自明な変更では「もっとエレガントな方法はないか？」と立ち止まる
-- hacky に感じたら「今知っていること全てを踏まえて、エレガントな解を実装する」
-- 単純で明白な修正にはこれを適用しない。過剰設計禁止
-- 自分の成果物を提出前に自分で批判する
+### Web (apps/web)
+```bash
+cd apps/web
+npm run dev      # dev server (turbopack)
+npm run build    # production build
+npm run lint     # eslint
+npx tsc --noEmit # type check
+```
 
-### Autonomous Bug Fixing
-- バグ報告を受けたら、確認を求めずに自分で直す
-- ログ、エラー、失敗テストを自分で特定し、解決する
-- ユーザーのコンテキストスイッチをゼロにする
-- 失敗しているCIテストも指示なしで修正に向かう
+### API (apps/api)
+```bash
+cd apps/api
+uvicorn app.main:app --reload     # dev server
+pytest                             # run tests
+pytest --cov=app --cov-report=term # with coverage
+```
+
+### Worker (apps/worker)
+```bash
+cd apps/worker
+python -m worker.handler  # local test
+```
+
+---
+
+## Core Principles
+
+- **Simplicity First**: 変更は可能な限りシンプルに。影響範囲を最小化する
+- **No Laziness**: 根本原因を探す。一時的な修正禁止。シニアエンジニア基準
+- **Staff Engineer Test**: 「スタッフエンジニアがこれを承認するか？」を常に自問する
 
 ### Safety Gate
 - 本番環境への変更は「本番デプロイ承認」の明示的な承認が必要
-- read-only で確認すべき場面では、先に確認してから変更する
 - 不可逆な操作（DB マイグレーション、本番デプロイ等）は必ず確認を取る
 
 ---
 
-## ECC Integration（Everything Claude Code との連携）
+## Important Notes
 
-以下はECCに委譲する。CLAUDE.md では定義しない:
-
-- 実装計画 → `/plan`
-- サブエージェント戦略 → ECC エージェント定義
-- テスト駆動開発 → `/tdd`
-- コードレビュー → `/code-review`
-- 検証ループ → `/verify`, `/quality-gate`
-- セッション管理 → `/save-session`, `/resume-session`
-- 学習・改善 → `/learn`, `/learn-eval`, Instinct システム
-- タスク進捗管理 → ECC session management
-
-ECC のコマンド・エージェント・フックが上記を担当する。
-このCLAUDE.md は「どう振る舞うか」の姿勢だけを定義する。
-
-### モデル選択
-ECCのモデルルーティング（タスク別にOpus/Sonnet/Haiku自動選択）を優先する。
-グローバルCLAUDE.mdのModel Policyより本ルールが優先。
-
-### 学習データ運用
-- Instinct（継続学習）: 有効
-- 上限: 50件。超過時は信頼度スコアが低いものから削除
-- セッション終了時: `/instinct-export` でエクスポートし、プロジェクトルートの `ecc-instinct-snapshot.txt` に上書き保存する
+- Next.js 16は破壊的変更あり。`apps/web/AGENTS.md`参照。コード書く前に`node_modules/next/dist/docs/`のガイドを読むこと
+- Stripe金額はJPY zero-decimal（880 = 880円）。cents換算しない
+- unslothは使わない。vanilla transformers + peft + trl==0.18.2（pinned）
+- `apps/api/.env`は`.gitignore`に含まれている。秘密情報はRender環境変数で管理

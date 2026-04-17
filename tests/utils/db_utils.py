@@ -73,10 +73,8 @@ class DatabaseManager:
     async def _cleanup_table(self, table_name: str):
         """Clean up test data from specific table"""
         try:
-            # Delete records that start with test prefix or are created in last hour (for tests)
-            result = self.client.table(table_name).delete().or_(
-                f"id.like.{self.test_prefix}%,"
-                f"created_at.gte.{(datetime.utcnow() - timedelta(hours=1)).isoformat()}"
+            result = self.client.table(table_name).delete().like(
+                "id", f"{self.test_prefix}%"
             ).execute()
 
             deleted_count = len(result.data) if result.data else 0
@@ -205,7 +203,7 @@ class DatabaseManager:
                 "project_id": project_id,
                 "stripe_payment_intent_id": f"pi_test_{uuid.uuid4().hex[:16]}",
                 "stripe_session_id": f"cs_test_{uuid.uuid4().hex[:16]}",
-                "amount": 88000,  # 880円 in cents
+                "amount": 880,  # JPY zero-decimal
                 "currency": "jpy",
                 "status": status,
                 "created_at": datetime.utcnow().isoformat()

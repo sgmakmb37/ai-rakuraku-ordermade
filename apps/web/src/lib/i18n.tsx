@@ -183,7 +183,9 @@ export const translations = {
       completed: "完了",
       failed: "失敗",
       success: "成功",
+      queued: "待機中",
       inProgress: "進行中",
+      in_progress: "進行中",
     },
     auth: {
       error: {
@@ -381,7 +383,9 @@ export const translations = {
       completed: "Completed",
       failed: "Failed",
       success: "Success",
+      queued: "Queued",
       inProgress: "In progress",
+      in_progress: "In progress",
     },
     auth: {
       error: {

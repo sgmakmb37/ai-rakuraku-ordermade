@@ -42,10 +42,19 @@ async def start_training(
 ):
     _get_user_project(supabase, project_id, user["id"])
 
-    # ステータスをtrainingに更新
+    payments = (
+        supabase.table("payments")
+        .select("id")
+        .eq("project_id", project_id)
+        .eq("status", "completed")
+        .execute()
+    )
+    if not payments.data:
+        raise HTTPException(status_code=402, detail="Payment required")
+
     supabase.table("projects").update({"status": "training"}).eq("id", project_id).execute()
 
-    # training_jobsにqueued状態で作成
+
     job_id = str(uuid.uuid4())
     supabase.table("training_jobs").insert({
         "id": job_id,
@@ -71,6 +80,7 @@ async def start_training(
             supabase.table("training_jobs").update(
                 {"status": "failed", "error_message": "RunPod API error"}
             ).eq("id", job_id).execute()
+            supabase.table("projects").update({"status": "created"}).eq("id", project_id).execute()
             raise HTTPException(status_code=502, detail="RunPod API error")
     else:
         # Redisキューにジョブ投入
@@ -83,6 +93,7 @@ async def start_training(
             supabase.table("training_jobs").update(
                 {"status": "failed", "error_message": "Queue error"}
             ).eq("id", job_id).execute()
+            supabase.table("projects").update({"status": "created"}).eq("id", project_id).execute()
             raise HTTPException(status_code=502, detail="Queue service error")
 
     return {"job_id": job_id, "status": "queued"}
