@@ -2,6 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
@@ -85,38 +86,38 @@ export default function DashboardPage() {
   const canCreateNewProject = projects.length < 5;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-950">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            AIらくらくオーダーメイド
-          </h1>
-          <button
-            onClick={handleLogout}
-            disabled={isLogoutLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLogoutLoading ? "ログアウト中..." : "ログアウト"}
-          </button>
-        </div>
+      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-zinc-950/80 backdrop-blur-2xl">
+        <nav className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3 sm:px-6 sm:py-4">
+          <Link href="/" className="logo-text text-lg font-bold cursor-pointer sm:text-xl">AI Rakuraku</Link>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleLogout}
+              disabled={isLogoutLoading}
+              className="text-sm text-zinc-400 cursor-pointer hover:text-white transition-colors disabled:opacity-50"
+            >
+              {isLogoutLoading ? "ログアウト中..." : "Logout"}
+            </button>
+          </div>
+        </nav>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-5xl px-5 py-8 sm:px-6">
         {/* Top Section with New Project Button */}
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-bold text-white">
             プロジェクト一覧
           </h2>
           <button
             onClick={handleNewProject}
             disabled={!canCreateNewProject}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+            className={
               canCreateNewProject
-                ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
+                ? "rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110"
+                : "rounded-lg border border-white/[0.1] bg-white/[0.03] px-6 py-2.5 text-sm font-medium text-zinc-500 cursor-not-allowed"
+            }
           >
             {canCreateNewProject ? "新規作成" : "上限に達しています"}
           </button>
@@ -124,25 +125,28 @@ export default function DashboardPage() {
 
         {/* Projects Grid */}
         {isLoading ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow">
-            <p className="text-gray-500 text-lg">読み込み中...</p>
+          <div className="flex items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <p className="text-sm text-zinc-400">読み込み中...</p>
+            </div>
           </div>
         ) : error ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow">
-            <p className="text-red-500 text-lg">{error}</p>
+          <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+            <p className="text-sm text-red-400 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+              className="rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110"
             >
               リトライ
             </button>
           </div>
         ) : projects.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow">
-            <p className="text-gray-500 text-lg">まだプロジェクトがありません</p>
+          <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+            <p className="text-sm text-zinc-400 mb-4">まだプロジェクトがありません</p>
             <button
               onClick={handleNewProject}
-              className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+              className="rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110"
             >
               最初のプロジェクトを作成
             </button>
@@ -153,18 +157,18 @@ export default function DashboardPage() {
               <div
                 key={project.id}
                 onClick={() => handleCardClick(project.id)}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer p-6 border border-gray-100"
+                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 cursor-pointer transition-all duration-200 hover:border-white/[0.12] hover:bg-white/[0.04]"
               >
                 {/* Status Badge */}
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    <h3 className="text-base font-bold text-white mb-1">
                       {project.name}
                     </h3>
-                    <p className="text-sm text-gray-600">{project.model_type}</p>
+                    <p className="text-sm text-zinc-400">{project.model_type}</p>
                   </div>
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-2 ${getStatusBadgeColor(
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ml-2 ${getStatusBadgeColor(
                       project.status
                     )}`}
                   >
@@ -173,24 +177,24 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Meta Information */}
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between text-gray-700">
-                    <span className="text-gray-600">残り日数：</span>
-                    <span className="font-medium">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-zinc-400">残り日数</span>
+                    <span className="text-sm text-zinc-300 font-medium">
                       あと{project.days_until_deletion}日で削除
                     </span>
                   </div>
-                  <div className="flex justify-between text-gray-700">
-                    <span className="text-gray-600">作成日：</span>
-                    <span className="font-medium">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-zinc-400">作成日</span>
+                    <span className="text-sm text-zinc-300 font-medium">
                       {new Date(project.created_at).toLocaleDateString("ja-JP")}
                     </span>
                   </div>
                 </div>
 
                 {/* Footer */}
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-xs text-gray-500">
+                <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                  <p className="text-xs text-zinc-500">
                     クリックして詳細を表示
                   </p>
                 </div>

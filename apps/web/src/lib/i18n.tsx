@@ -33,18 +33,26 @@ export const translations = {
       createAccount: "アカウントを作成",
       forgotPassword: "パスワードを忘れた方",
       terms: "ログインすることで、利用規約に同意したものとみなされます。",
+      errorGeneric: "ログインに失敗しました。もう一度お試しください。",
       signup: {
         title: "アカウント作成",
         submit: "アカウントを作成",
         passwordConfirm: "パスワード確認",
         passwordHint: "6文字以上",
         loginLink: "ログインはこちら",
+        errorMinLength: "パスワードは6文字以上で入力してください。",
+        errorMismatch: "パスワードが一致しません。",
+        errorGeneric: "アカウント作成に失敗しました。もう一度お試しください。",
       },
       verify: {
         title: "確認コードを入力",
         description: "に送信した6桁のコードを入力してください。",
         submit: "確認",
+        submitting: "確認中...",
         resend: "コードを再送信",
+        errorLength: "6桁のコードを入力してください。",
+        errorGeneric: "確認に失敗しました。もう一度お試しください。",
+        errorResend: "コードの再送信に失敗しました。",
       },
       forgot: {
         title: "パスワードをリセット",
@@ -52,6 +60,7 @@ export const translations = {
           "登録されているメールアドレスを入力してください。リセットメールをお送りします。",
         submit: "リセットメールを送信",
         backToLogin: "ログインに戻る",
+        errorGeneric: "リセットメールの送信に失敗しました。もう一度お試しください。",
       },
     },
     dashboard: {
@@ -170,24 +179,33 @@ export const translations = {
       createAccount: "Create account",
       forgotPassword: "Forgot password?",
       terms: "By logging in, you agree to our Terms of Service.",
+      errorGeneric: "Login failed. Please try again.",
       signup: {
         title: "Create account",
         submit: "Create account",
         passwordConfirm: "Confirm password",
         passwordHint: "6 characters minimum",
         loginLink: "Log in instead",
+        errorMinLength: "Password must be at least 6 characters.",
+        errorMismatch: "Passwords do not match.",
+        errorGeneric: "Account creation failed. Please try again.",
       },
       verify: {
         title: "Enter verification code",
         description: "Enter the 6-digit code sent to ",
         submit: "Verify",
+        submitting: "Verifying...",
         resend: "Resend code",
+        errorLength: "Please enter a 6-digit code.",
+        errorGeneric: "Verification failed. Please try again.",
+        errorResend: "Failed to resend code.",
       },
       forgot: {
         title: "Reset password",
         description: "Enter your email address. We'll send you a reset link.",
         submit: "Send reset email",
         backToLogin: "Back to login",
+        errorGeneric: "Failed to send reset email. Please try again.",
       },
     },
     dashboard: {
@@ -343,28 +361,24 @@ export function useLocale() {
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("ja");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("locale") as Locale | null;
-    if (stored === "ja" || stored === "en") {
-      setLocaleState(stored);
+    const match = document.cookie.match(/(?:^|;\s*)locale=(\w+)/);
+    const cookieLocale = match?.[1] as Locale | undefined;
+    if (cookieLocale === "ja" || cookieLocale === "en") {
+      setLocaleState(cookieLocale);
     }
-    setMounted(true);
   }, []);
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("locale", next);
-    }
+    document.cookie = `locale=${next};path=/;max-age=${365 * 24 * 60 * 60};samesite=lax`;
+    window.location.reload();
   }, []);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const t = useCallback(createT(locale), [locale]);
 
-  // Render children regardless of mount state to avoid layout shift.
-  // Pre-mount renders with default "ja" locale (SSR-safe).
   return (
     <LocaleContext.Provider value={{ locale, setLocale, t }}>
       {children}

@@ -3,13 +3,13 @@ export type ProjectStatus = "created" | "training" | "completed" | "failed";
 export const getStatusBadgeColor = (status: ProjectStatus): string => {
   switch (status) {
     case "training":
-      return "bg-blue-100 text-blue-800";
+      return "bg-blue-500/10 text-blue-400";
     case "completed":
-      return "bg-green-100 text-green-800";
+      return "bg-emerald-500/10 text-emerald-400";
     case "failed":
-      return "bg-red-100 text-red-800";
+      return "bg-red-500/10 text-red-400";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-white/[0.06] text-zinc-400";
   }
 };
 

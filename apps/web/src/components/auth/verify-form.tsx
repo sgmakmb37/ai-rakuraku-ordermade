@@ -33,28 +33,17 @@ export function VerifyForm({
 }: VerifyFormProps) {
   const { t } = useLocale();
   return (
-    <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-      <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
-        <h2
-          style={{
-            fontSize: "1.31rem",
-            fontWeight: 700,
-            color: "var(--color-text)",
-            marginBottom: "0.5rem",
-            lineHeight: 1.19,
-          }}
-        >
+    <form onSubmit={onSubmit} className="flex flex-col gap-5">
+      <div className="text-center mb-2">
+        <h2 className="text-white font-bold text-xl mb-2">
           {t("login.verify.title")}
         </h2>
-        <p
-          className="text-caption"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
+        <p className="text-sm text-zinc-400">
           {t("login.verify.description", { email })}
         </p>
       </div>
 
-      <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
+      <div className="flex gap-3 justify-center">
         {code.map((digit, index) => (
           <input
             key={index}
@@ -68,29 +57,7 @@ export function VerifyForm({
             inputMode="numeric"
             maxLength={1}
             disabled={isLoading}
-            style={{
-              width: "48px",
-              height: "56px",
-              textAlign: "center",
-              fontSize: "1.25rem",
-              fontWeight: 600,
-              borderRadius: "11px",
-              border: "1px solid var(--color-input-border)",
-              background: "var(--color-input-bg)",
-              color: "var(--color-text)",
-              outline: "none",
-              transition: "border-color 200ms ease-in-out, box-shadow 200ms ease-in-out",
-              opacity: isLoading ? 0.42 : 1,
-              cursor: isLoading ? "not-allowed" : "text",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-primary)";
-              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0, 113, 227, 0.2)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-input-border)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
+            className="w-12 h-14 text-center text-xl font-semibold rounded-lg border border-white/[0.08] bg-white/[0.03] text-white outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
           />
         ))}
       </div>
@@ -100,12 +67,11 @@ export function VerifyForm({
       <button
         type="submit"
         disabled={isLoading || code.some((c) => !c)}
-        className="btn-primary"
-        style={{ width: "100%" }}
+        className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? (
-          <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-            <span className="spinner-apple" style={{ width: 16, height: 16, borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }} />
+          <span className="flex items-center justify-center gap-2">
+            <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
             {t("login.verify.submitting")}
           </span>
         ) : (
@@ -113,23 +79,12 @@ export function VerifyForm({
         )}
       </button>
 
-      <div style={{ textAlign: "center" }}>
+      <div className="text-center">
         <button
           type="button"
           onClick={onResend}
           disabled={isLoading}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: isLoading ? "not-allowed" : "pointer",
-            fontSize: "14px",
-            color: "var(--color-link)",
-            textDecoration: "none",
-            opacity: isLoading ? 0.42 : 1,
-            padding: "4px 0",
-          }}
-          onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.textDecoration = "underline"; }}
-          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+          className="text-sm text-blue-400 cursor-pointer transition-colors hover:text-blue-300 bg-transparent border-none p-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t("login.verify.resend")}
         </button>

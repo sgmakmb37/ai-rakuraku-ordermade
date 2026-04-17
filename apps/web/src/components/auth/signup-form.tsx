@@ -26,21 +26,14 @@ export function SignupForm({
   isLoading,
   error,
   onSubmit,
-  onNavigate,
 }: SignupFormProps) {
   const { t } = useLocale();
   return (
-    <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-      <div>
+    <form onSubmit={onSubmit} className="flex flex-col gap-5">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
         <label
           htmlFor="signup-email"
-          style={{
-            display: "block",
-            fontSize: "14px",
-            fontWeight: 500,
-            color: "var(--color-text-secondary)",
-            marginBottom: "0.5rem",
-          }}
+          className="block text-xs font-medium text-zinc-500 mb-1.5"
         >
           {t("login.email")}
         </label>
@@ -52,20 +45,14 @@ export function SignupForm({
           placeholder="you@example.com"
           required
           disabled={isLoading}
-          className="input-apple"
+          className="w-full bg-transparent text-sm text-white placeholder-zinc-600 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
-      <div>
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
         <label
           htmlFor="signup-password"
-          style={{
-            display: "block",
-            fontSize: "14px",
-            fontWeight: 500,
-            color: "var(--color-text-secondary)",
-            marginBottom: "0.5rem",
-          }}
+          className="block text-xs font-medium text-zinc-500 mb-1.5"
         >
           {t("login.password")}
         </label>
@@ -77,26 +64,17 @@ export function SignupForm({
           placeholder="••••••••"
           required
           disabled={isLoading}
-          className="input-apple"
+          className="w-full bg-transparent text-sm text-white placeholder-zinc-600 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
-        <p
-          className="text-micro"
-          style={{ color: "var(--color-text-tertiary)", marginTop: "0.25rem" }}
-        >
+        <p className="text-xs text-zinc-600 mt-1.5">
           {t("login.signup.passwordHint")}
         </p>
       </div>
 
-      <div>
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
         <label
           htmlFor="signup-password-confirm"
-          style={{
-            display: "block",
-            fontSize: "14px",
-            fontWeight: 500,
-            color: "var(--color-text-secondary)",
-            marginBottom: "0.5rem",
-          }}
+          className="block text-xs font-medium text-zinc-500 mb-1.5"
         >
           {t("login.signup.passwordConfirm")}
         </label>
@@ -108,7 +86,7 @@ export function SignupForm({
           placeholder="••••••••"
           required
           disabled={isLoading}
-          className="input-apple"
+          className="w-full bg-transparent text-sm text-white placeholder-zinc-600 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
@@ -117,38 +95,16 @@ export function SignupForm({
       <button
         type="submit"
         disabled={isLoading || !email || !password || !passwordConfirm}
-        className="btn-primary"
-        style={{ width: "100%" }}
+        className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? (
-          <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-            <span className="spinner-apple" style={{ width: 16, height: 16, borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }} />
-            {t("login.signup.submitting")}
+          <span className="flex items-center justify-center gap-2">
+            <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
           </span>
         ) : (
           t("login.signup.submit")
         )}
       </button>
-
-      <div style={{ textAlign: "center" }}>
-        <button
-          type="button"
-          onClick={() => onNavigate("login")}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "14px",
-            color: "var(--color-link)",
-            textDecoration: "none",
-            padding: "4px 0",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
-          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
-        >
-          {t("login.signup.loginLink")}
-        </button>
-      </div>
     </form>
   );
 }

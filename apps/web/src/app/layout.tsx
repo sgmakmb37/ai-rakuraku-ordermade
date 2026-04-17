@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import type { Locale } from "@/i18n/translations";
 import "./globals.css";
 import { WebVitalsReporter } from "@/components/web-vitals-reporter";
+import { LocaleProvider } from "@/lib/i18n";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -49,7 +50,7 @@ export default async function RootLayout({
     >
       <body className="min-h-screen bg-zinc-950 flex flex-col">
         <WebVitalsReporter />
-        {children}
+        <LocaleProvider>{children}</LocaleProvider>
       </body>
     </html>
   );

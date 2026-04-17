@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useLocale } from "@/lib/i18n";
 import { ChevronLeft, Plus, X, Upload } from "lucide-react";
+import Link from "next/link";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -221,106 +222,71 @@ export default function NewProjectPage() {
   const modelLabel = t(`new.models.${formData.modelType}.label`);
 
   return (
-    <div
-      className="animate-fade-in"
-      style={{
-        minHeight: "100vh",
-        background: "var(--color-bg)",
-        padding: "2rem 1rem",
-      }}
-    >
-      <div style={{ maxWidth: 680, margin: "0 auto" }}>
+    <div className="min-h-screen bg-zinc-950">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-zinc-950/80 backdrop-blur-2xl">
+        <nav className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3 sm:px-6 sm:py-4">
+          <Link href="/" className="logo-text text-lg font-bold cursor-pointer sm:text-xl">AI Rakuraku</Link>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="text-sm text-zinc-400 cursor-pointer hover:text-white transition-colors"
+            >
+              ← ダッシュボード
+            </button>
+          </div>
+        </nav>
+      </header>
+
+      <div className="mx-auto max-w-2xl px-5 py-8 sm:px-6">
         {/* Back to Dashboard Link */}
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div className="mb-6">
           <button
             onClick={() => router.push("/dashboard")}
-            style={{
-              background: "none",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              color: "var(--color-link)",
-              fontSize: "0.875rem",
-              textDecoration: "none",
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
-            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+            className="flex items-center gap-1 text-sm text-blue-400 cursor-pointer transition-colors hover:text-blue-300"
           >
             <ChevronLeft size={16} /><span>{t("new.backToDashboard")}</span>
           </button>
         </div>
 
         {/* Step Indicator */}
-        <div style={{ marginBottom: "2rem" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: "0.75rem" }}>
+        <div className="mb-8">
+          <div className="flex items-center mb-3">
             {[1, 2, 3, 4].map((step) => (
               <div
                 key={step}
-                style={{ display: "flex", alignItems: "center", flex: step < 4 ? 1 : "none" }}
+                className={`flex items-center ${step < 4 ? "flex-1" : ""}`}
               >
                 <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.8125rem",
-                    fontWeight: 600,
-                    flexShrink: 0,
-                    background:
-                      step <= currentStep
-                        ? "var(--color-primary)"
-                        : "var(--color-border)",
-                    color:
-                      step <= currentStep
-                        ? "#fff"
-                        : "var(--color-text-secondary)",
-                    transition: "background 0.2s",
-                  }}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 transition-colors duration-200 ${
+                    step <= currentStep
+                      ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+                      : "bg-white/[0.06] text-zinc-500"
+                  }`}
                 >
                   {step}
                 </div>
                 {step < 4 && (
                   <div
-                    style={{
-                      flex: 1,
-                      height: 2,
-                      margin: "0 0.5rem",
-                      background:
-                        step < currentStep
-                          ? "var(--color-primary)"
-                          : "var(--color-border)",
-                      transition: "background 0.2s",
-                    }}
+                    className={`flex-1 h-0.5 mx-2 transition-colors duration-200 ${
+                      step < currentStep
+                        ? "bg-gradient-to-r from-blue-600 to-violet-600"
+                        : "bg-white/[0.06]"
+                    }`}
                   />
                 )}
               </div>
             ))}
           </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              paddingRight: "0px",
-            }}
-          >
+          <div className="flex justify-between">
             {STEP_LABELS.map((label, i) => (
               <span
                 key={label}
-                style={{
-                  fontSize: "0.75rem",
-                  color:
-                    i + 1 === currentStep
-                      ? "var(--color-primary)"
-                      : "var(--color-text-secondary)",
-                  fontWeight: i + 1 === currentStep ? 500 : 400,
-                  width: i < 3 ? "calc(25% - 0.25rem)" : "auto",
-                }}
+                className={`text-xs ${
+                  i + 1 === currentStep
+                    ? "text-blue-400 font-medium"
+                    : "text-zinc-500"
+                } ${i < 3 ? "w-[calc(25%-0.25rem)]" : ""}`}
               >
                 {label}
               </span>
@@ -329,51 +295,28 @@ export default function NewProjectPage() {
         </div>
 
         {/* Card Container */}
-        <div className="card-apple">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
           {/* Step 1: Model Selection */}
           {currentStep === 1 && (
             <div>
-              <h2
-                style={{
-                  fontSize: "1.375rem",
-                  fontWeight: 600,
-                  color: "var(--color-text-primary)",
-                  marginBottom: "1.5rem",
-                  letterSpacing: "-0.02em",
-                }}
-              >
+              <h2 className="text-xl font-bold text-white mb-6">
                 {t("new.step1.title")}
               </h2>
               <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.875rem",
-                    fontWeight: 500,
-                    color: "var(--color-text-primary)",
-                    marginBottom: "0.5rem",
-                  }}
-                >
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
                   {t("new.step1.label")}
                 </label>
                 <select
                   value={formData.modelType}
                   onChange={handleModelChange}
-                  className="input-apple"
-                  style={{ width: "100%" }}
+                  className="w-full rounded-lg border border-white/[0.08] bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 cursor-pointer"
                 >
                   <option value="qwen2.5-1.5b">{t("new.models.qwen2.5-1.5b.label")}</option>
                   <option value="qwen2.5-3b">{t("new.models.qwen2.5-3b.label")}</option>
                   <option value="gemma-4-e2b">{t("new.models.gemma-4-e2b.label")}</option>
                   <option value="gemma-4-e4b">{t("new.models.gemma-4-e4b.label")}</option>
                 </select>
-                <p
-                  className="text-caption"
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    marginTop: "0.75rem",
-                  }}
-                >
+                <p className="text-sm text-zinc-400 mt-3">
                   {t(`new.models.${formData.modelType}.desc`)}
                 </p>
               </div>
@@ -383,36 +326,19 @@ export default function NewProjectPage() {
           {/* Step 2: Usage Setting */}
           {currentStep === 2 && (
             <div>
-              <h2
-                style={{
-                  fontSize: "1.375rem",
-                  fontWeight: 600,
-                  color: "var(--color-text-primary)",
-                  marginBottom: "1.5rem",
-                  letterSpacing: "-0.02em",
-                }}
-              >
+              <h2 className="text-xl font-bold text-white mb-6">
                 {t("new.step2.title")}
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              <div className="flex flex-col gap-6">
                 {/* Genre Selection */}
                 <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: 500,
-                      color: "var(--color-text-primary)",
-                      marginBottom: "0.5rem",
-                    }}
-                  >
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
                     {t("new.step2.genre")}
                   </label>
                   <select
                     value={formData.genre}
                     onChange={handleGenreChange}
-                    className="input-apple"
-                    style={{ width: "100%" }}
+                    className="w-full rounded-lg border border-white/[0.08] bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 cursor-pointer"
                   >
                     <option value="">{t("new.step2.genrePlaceholder")}</option>
                     {GENRES.map((g) => (
@@ -425,15 +351,7 @@ export default function NewProjectPage() {
 
                 {/* Purpose Input */}
                 <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: 500,
-                      color: "var(--color-text-primary)",
-                      marginBottom: "0.5rem",
-                    }}
-                  >
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
                     {t("new.step2.purpose")}
                   </label>
                   <textarea
@@ -441,8 +359,7 @@ export default function NewProjectPage() {
                     onChange={handlePurposeChange}
                     placeholder={t("new.step2.purposePlaceholder")}
                     rows={4}
-                    className="input-apple"
-                    style={{ width: "100%", resize: "vertical" }}
+                    className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 resize-none"
                   />
                 </div>
               </div>
@@ -452,93 +369,45 @@ export default function NewProjectPage() {
           {/* Step 3: Data Input */}
           {currentStep === 3 && (
             <div>
-              <h2
-                style={{
-                  fontSize: "1.375rem",
-                  fontWeight: 600,
-                  color: "var(--color-text-primary)",
-                  marginBottom: "1.5rem",
-                  letterSpacing: "-0.02em",
-                }}
-              >
+              <h2 className="text-xl font-bold text-white mb-6">
                 {t("new.step3.title")}
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              <div className="flex flex-col gap-6">
                 {/* URL Input */}
                 <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: 500,
-                      color: "var(--color-text-primary)",
-                      marginBottom: "0.5rem",
-                    }}
-                  >
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
                     {t("new.step3.urlLabel")}
                   </label>
-                  <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                  <div className="flex gap-2 mb-3">
                     <input
                       type="text"
                       value={newUrl}
                       onChange={(e) => setNewUrl(e.target.value)}
                       placeholder="https://example.com"
                       onKeyPress={(e) => e.key === "Enter" && handleAddUrl()}
-                      className="input-apple"
-                      style={{ flex: 1 }}
+                      className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
                     />
                     <button
                       onClick={handleAddUrl}
                       disabled={!newUrl.trim() || formData.urls.length >= 5}
-                      className="btn-primary"
-                      style={{
-                        padding: "0 1rem",
-                        opacity: !newUrl.trim() || formData.urls.length >= 5 ? 0.4 : 1,
-                        cursor: !newUrl.trim() || formData.urls.length >= 5 ? "not-allowed" : "pointer",
-                      }}
+                      className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <Plus size={14} />{t("new.add")}
                     </button>
                   </div>
                   {formData.urls.length > 0 && (
-                    <ul style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <ul className="flex flex-col gap-2">
                       {formData.urls.map((url, idx) => (
                         <li
                           key={idx}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            background: "var(--color-bg)",
-                            padding: "0.625rem 0.875rem",
-                            borderRadius: 8,
-                            fontSize: "0.875rem",
-                          }}
+                          className="flex justify-between items-center rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
                         >
-                          <span
-                            style={{
-                              color: "var(--color-text-primary)",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              flex: 1,
-                              marginRight: "0.75rem",
-                            }}
-                          >
+                          <span className="text-sm text-zinc-300 overflow-hidden text-ellipsis whitespace-nowrap flex-1 mr-3">
                             {url}
                           </span>
                           <button
                             onClick={() => handleRemoveUrl(idx)}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              padding: 0,
-                              cursor: "pointer",
-                              color: "var(--color-error)",
-                              fontSize: "0.8125rem",
-                              fontWeight: 500,
-                              flexShrink: 0,
-                            }}
+                            className="flex items-center gap-1 text-xs text-red-400 cursor-pointer hover:text-red-300 transition-colors flex-shrink-0"
                           >
                             <X size={14} />{t("new.delete")}
                           </button>
@@ -550,98 +419,39 @@ export default function NewProjectPage() {
 
                 {/* File Upload */}
                 <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: 500,
-                      color: "var(--color-text-primary)",
-                      marginBottom: "0.5rem",
-                    }}
-                  >
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
                     {t("new.step3.fileLabel")}
                   </label>
-                  <div
-                    style={{
-                      border: "2px dashed var(--color-border)",
-                      borderRadius: 12,
-                      padding: "1.5rem",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "var(--color-bg)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = "transparent")
-                    }
-                  >
+                  <div className="rounded-xl border-2 border-dashed border-white/[0.08] p-6 text-center cursor-pointer transition-colors hover:border-white/[0.15] hover:bg-white/[0.02]">
                     <input
                       type="file"
                       multiple
                       accept=".txt,.pdf,.csv,.json"
                       onChange={handleFileChange}
-                      style={{ display: "none" }}
+                      className="hidden"
                       id="fileInput"
                     />
-                    <label htmlFor="fileInput" style={{ cursor: "pointer", display: "block" }}>
-                      <Upload size={20} style={{ color: "var(--color-text-tertiary)", marginBottom: 8 }} />
-                      <p
-                        style={{
-                          fontSize: "0.875rem",
-                          fontWeight: 500,
-                          color: "var(--color-text-primary)",
-                        }}
-                      >
+                    <label htmlFor="fileInput" className="cursor-pointer block">
+                      <Upload size={20} className="text-zinc-500 mx-auto mb-2" />
+                      <p className="text-sm font-medium text-zinc-300">
                         {t("new.step3.dragDrop")}
                       </p>
-                      <p
-                        className="text-caption"
-                        style={{ color: "var(--color-text-secondary)", marginTop: "0.25rem" }}
-                      >
+                      <p className="text-xs text-zinc-500 mt-1">
                         {t("new.step3.fileFormats")}
                       </p>
                     </label>
                   </div>
                   {formData.files.length > 0 && (
-                    <ul
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.5rem",
-                        marginTop: "0.75rem",
-                      }}
-                    >
+                    <ul className="flex flex-col gap-2 mt-3">
                       {formData.files.map((file, idx) => (
                         <li
                           key={idx}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            background: "var(--color-bg)",
-                            padding: "0.625rem 0.875rem",
-                            borderRadius: 8,
-                            fontSize: "0.875rem",
-                          }}
+                          className="flex justify-between items-center rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
                         >
-                          <span style={{ color: "var(--color-text-primary)" }}>
-                            {file.name}
-                          </span>
+                          <span className="text-sm text-zinc-300">{file.name}</span>
                           <button
                             onClick={() => handleRemoveFile(idx)}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              padding: 0,
-                              cursor: "pointer",
-                              color: "var(--color-error)",
-                              fontSize: "0.8125rem",
-                              fontWeight: 500,
-                              flexShrink: 0,
-                              marginLeft: "0.75rem",
-                            }}
+                            className="flex items-center gap-1 text-xs text-red-400 cursor-pointer hover:text-red-300 transition-colors flex-shrink-0 ml-3"
                           >
                             <X size={14} />{t("new.delete")}
                           </button>
@@ -652,25 +462,13 @@ export default function NewProjectPage() {
                 </div>
 
                 {/* Counter */}
-                <div
-                  style={{
-                    background: "var(--color-bg)",
-                    borderRadius: 10,
-                    padding: "1rem 1.25rem",
-                  }}
-                >
-                  <p
-                    className="text-caption"
-                    style={{ color: "var(--color-text-primary)", marginBottom: "0.25rem" }}
-                  >
-                    <span style={{ fontWeight: 600 }}>{t("new.step3.sources")}</span>{" "}
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                  <p className="text-sm text-zinc-300 mb-1">
+                    <span className="font-semibold">{t("new.step3.sources")}</span>{" "}
                     {t("new.sourcesCount", { n: sourceCount })}
                   </p>
-                  <p
-                    className="text-caption"
-                    style={{ color: "var(--color-text-primary)" }}
-                  >
-                    <span style={{ fontWeight: 600 }}>{t("new.step3.charCount")}</span>{" "}
+                  <p className="text-sm text-zinc-300">
+                    <span className="font-semibold">{t("new.step3.charCount")}</span>{" "}
                     {t("new.charsCount", { n: charCount.toLocaleString() })}
                   </p>
                 </div>
@@ -681,28 +479,11 @@ export default function NewProjectPage() {
           {/* Step 4: Confirmation */}
           {currentStep === 4 && (
             <div>
-              <h2
-                style={{
-                  fontSize: "1.375rem",
-                  fontWeight: 600,
-                  color: "var(--color-text-primary)",
-                  marginBottom: "1.5rem",
-                  letterSpacing: "-0.02em",
-                }}
-              >
+              <h2 className="text-xl font-bold text-white mb-6">
                 {t("new.step4.title")}
               </h2>
 
-              <div
-                style={{
-                  background: "var(--color-bg)",
-                  borderRadius: 10,
-                  padding: "1.25rem",
-                  marginBottom: "1.5rem",
-                  display: "grid",
-                  gap: 0,
-                }}
-              >
+              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] mb-6">
                 {[
                   { label: t("new.step4.model"), value: modelLabel },
                   { label: t("new.step2.genre"), value: formData.genre || t("new.notSelected") },
@@ -711,26 +492,10 @@ export default function NewProjectPage() {
                 ].map((row, i) => (
                   <div
                     key={row.label}
-                    style={{
-                      padding: "0.875rem 0",
-                      borderTop: i > 0 ? "1px solid var(--color-border)" : "none",
-                    }}
+                    className={`px-4 py-3 ${i > 0 ? "border-t border-white/[0.06]" : ""}`}
                   >
-                    <p
-                      className="text-caption"
-                      style={{ color: "var(--color-text-secondary)", marginBottom: "0.25rem" }}
-                    >
-                      {row.label}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "0.9375rem",
-                        fontWeight: 500,
-                        color: "var(--color-text-primary)",
-                      }}
-                    >
-                      {row.value}
-                    </p>
+                    <p className="text-xs text-zinc-500 mb-1">{row.label}</p>
+                    <p className="text-sm font-medium text-white">{row.value}</p>
                   </div>
                 ))}
               </div>
@@ -738,24 +503,11 @@ export default function NewProjectPage() {
               <button
                 onClick={handleStart}
                 disabled={isLoading}
-                className="btn-primary"
-                style={{
-                  width: "100%",
-                  padding: "0.875rem 1.5rem",
-                  fontSize: "1rem",
-                  fontWeight: 600,
-                  marginBottom: "1rem",
-                  opacity: isLoading ? 0.6 : 1,
-                  cursor: isLoading ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                }}
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-3 text-base font-semibold text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed mb-4"
               >
                 {isLoading ? (
                   <>
-                    <span className="spinner-apple" />
+                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     {t("detail.processing")}
                   </>
                 ) : (
@@ -767,18 +519,12 @@ export default function NewProjectPage() {
 
           {/* Navigation Buttons */}
           <div
-            style={{
-              marginTop: "2rem",
-              display: "flex",
-              gap: "0.75rem",
-              justifyContent: currentStep > 1 ? "space-between" : "flex-end",
-            }}
+            className={`mt-8 flex gap-3 ${currentStep > 1 ? "justify-between" : "justify-end"}`}
           >
             {currentStep > 1 && (
               <button
                 onClick={handleBack}
-                className="btn-secondary"
-                style={{ flex: 1 }}
+                className="flex-1 rounded-lg border border-white/[0.1] bg-white/[0.03] px-6 py-2.5 text-sm font-medium text-zinc-300 cursor-pointer transition-all duration-300 hover:border-white/[0.2] hover:bg-white/[0.06]"
               >
                 {t("new.nav.back")}
               </button>
@@ -786,8 +532,7 @@ export default function NewProjectPage() {
             {currentStep < 4 && (
               <button
                 onClick={handleNext}
-                className="btn-primary"
-                style={{ flex: 1 }}
+                className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110"
               >
                 {t("new.nav.next")}
               </button>

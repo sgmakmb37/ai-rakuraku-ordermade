@@ -8,11 +8,12 @@ import { LoginForm } from "@/components/auth/login-form";
 import { SignupForm } from "@/components/auth/signup-form";
 import { VerifyForm } from "@/components/auth/verify-form";
 import { ForgotForm } from "@/components/auth/forgot-form";
+import { Globe } from "lucide-react";
 
 type AuthView = "login" | "signup" | "verify" | "forgot";
 
 export default function LoginPage() {
-  const { t } = useLocale();
+  const { t, locale, setLocale } = useLocale();
   const router = useRouter();
   const supabase = createClient();
   const [view, setView] = useState<AuthView>("login");
@@ -202,64 +203,67 @@ export default function LoginPage() {
   const commonProps = { email, setEmail, password, setPassword, isLoading, error };
 
   return (
-    <div
-      className="animate-fade-in"
-      style={{
-        minHeight: "100vh",
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--color-bg)",
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: "448px", padding: "0 1.5rem 3rem" }}>
-        {/* Logo & Header */}
-        <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-          <div style={{ marginBottom: "1.25rem" }}>
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "56px",
-                height: "56px",
-                borderRadius: "50%",
-                background: "var(--color-primary)",
-                marginBottom: "1.25rem",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "1.25rem",
-                  fontWeight: 700,
-                  color: "#ffffff",
-                  letterSpacing: "-0.5px",
-                }}
-              >
-                AI
-              </span>
-            </div>
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-zinc-950 px-5">
+      {/* Language toggle */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={() => setLocale(locale === "ja" ? "en" : "ja")}
+          className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-xs text-zinc-400 cursor-pointer transition-colors duration-200 hover:border-white/[0.15] hover:text-white"
+        >
+          <Globe size={13} />
+          {locale === "ja" ? "EN" : "JP"}
+        </button>
+      </div>
+
+      <div className="w-full max-w-[448px] pb-12">
+        {/* Logo */}
+        <div className="text-center mb-10">
+          <div className="mb-5">
+            <span className="logo-text text-2xl font-bold">AI Rakuraku</span>
           </div>
-          <h1
-            className="text-section"
-            style={{
-              color: "var(--color-text)",
-              marginBottom: "0.5rem",
-            }}
-          >
-            {t("common.appName")}
-          </h1>
-          <p
-            className="text-caption"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
+          <p className="text-sm text-zinc-400">
             {t("common.tagline")}
           </p>
         </div>
 
-        {/* Card */}
-        <div className="card-apple">
+        {/* View tabs (button style) */}
+        {view !== "verify" && (
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => handleNavigate("login")}
+              className={`flex-1 rounded-lg py-2.5 text-sm font-medium cursor-pointer transition-all duration-200 ${
+                view === "login"
+                  ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-[0_0_16px_rgba(99,102,241,0.3)]"
+                  : "border border-white/[0.08] bg-white/[0.03] text-zinc-400 hover:border-white/[0.15] hover:text-white"
+              }`}
+            >
+              {t("login.title")}
+            </button>
+            <button
+              onClick={() => handleNavigate("signup")}
+              className={`flex-1 rounded-lg py-2.5 text-sm font-medium cursor-pointer transition-all duration-200 ${
+                view === "signup"
+                  ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-[0_0_16px_rgba(99,102,241,0.3)]"
+                  : "border border-white/[0.08] bg-white/[0.03] text-zinc-400 hover:border-white/[0.15] hover:text-white"
+              }`}
+            >
+              {t("login.signup.title")}
+            </button>
+            <button
+              onClick={() => handleNavigate("forgot")}
+              className={`flex-1 rounded-lg py-2.5 text-sm font-medium cursor-pointer transition-all duration-200 ${
+                view === "forgot"
+                  ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-[0_0_16px_rgba(99,102,241,0.3)]"
+                  : "border border-white/[0.08] bg-white/[0.03] text-zinc-400 hover:border-white/[0.15] hover:text-white"
+              }`}
+            >
+              {t("login.forgotPassword")}
+            </button>
+          </div>
+        )}
+
+        {/* Form card */}
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 backdrop-blur-sm">
           {view === "login" && (
             <LoginForm
               {...commonProps}
@@ -299,14 +303,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p
-          className="text-micro"
-          style={{
-            textAlign: "center",
-            color: "var(--color-text-tertiary)",
-            marginTop: "2rem",
-          }}
-        >
+        <p className="text-xs text-zinc-500 text-center mt-8">
           {t("login.terms")}
         </p>
       </div>

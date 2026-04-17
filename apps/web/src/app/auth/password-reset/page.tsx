@@ -49,35 +49,17 @@ export default function PasswordResetPage() {
 
   if (isComplete) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center px-4 animate-fade-in"
-        style={{ background: "var(--color-bg)" }}
-      >
-        <div className="card-apple w-full text-center" style={{ maxWidth: 480 }}>
-          <h1
-            style={{
-              fontSize: "1.75rem",
-              fontWeight: 400,
-              color: "var(--color-text-primary)",
-              marginBottom: "0.75rem",
-              letterSpacing: "-0.02em",
-            }}
-          >
+      <div className="min-h-screen flex items-center justify-center px-4 bg-zinc-950">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 backdrop-blur-sm w-full max-w-[480px] text-center">
+          <h1 className="text-white font-bold text-2xl mb-3">
             {t("auth.reset.complete.title")}
           </h1>
-          <p
-            className="text-caption"
-            style={{
-              color: "var(--color-text-secondary)",
-              marginBottom: "2rem",
-            }}
-          >
+          <p className="text-sm text-zinc-400 mb-8">
             {t("auth.reset.complete.description")}
           </p>
           <button
             onClick={() => router.push("/dashboard")}
-            className="btn-primary"
-            style={{ width: "100%" }}
+            className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110"
           >
             {t("auth.reset.complete.toDashboard")}
           </button>
@@ -87,45 +69,18 @@ export default function PasswordResetPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 animate-fade-in"
-      style={{ background: "var(--color-bg)" }}
-    >
-      <div className="card-apple w-full" style={{ maxWidth: 480 }}>
-        <h1
-          style={{
-            fontSize: "1.75rem",
-            fontWeight: 400,
-            color: "var(--color-text-primary)",
-            marginBottom: "0.5rem",
-            letterSpacing: "-0.02em",
-            textAlign: "center",
-          }}
-        >
+    <div className="min-h-screen flex items-center justify-center px-4 bg-zinc-950">
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 backdrop-blur-sm w-full max-w-[480px]">
+        <h1 className="text-white font-bold text-2xl text-center mb-2">
           {t("auth.reset.title")}
         </h1>
-        <p
-          className="text-caption"
-          style={{
-            color: "var(--color-text-secondary)",
-            textAlign: "center",
-            marginBottom: "2rem",
-          }}
-        >
+        <p className="text-sm text-zinc-400 text-center mb-8">
           {t("auth.reset.description")}
         </p>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.8125rem",
-                fontWeight: 500,
-                color: "var(--color-text-primary)",
-                marginBottom: "0.375rem",
-              }}
-            >
+            <label className="block text-sm font-medium text-zinc-400 mb-2">
               {t("auth.reset.newPassword")}
             </label>
             <input
@@ -134,21 +89,12 @@ export default function PasswordResetPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder={t("auth.reset.passwordPlaceholder")}
               required
-              className="input-apple"
-              style={{ width: "100%" }}
+              className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
             />
           </div>
 
           <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.8125rem",
-                fontWeight: 500,
-                color: "var(--color-text-primary)",
-                marginBottom: "0.375rem",
-              }}
-            >
+            <label className="block text-sm font-medium text-zinc-400 mb-2">
               {t("auth.reset.confirmPassword")}
             </label>
             <input
@@ -157,29 +103,22 @@ export default function PasswordResetPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder={t("auth.reset.confirmPlaceholder")}
               required
-              className="input-apple"
-              style={{ width: "100%" }}
+              className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none transition-colors focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30"
             />
           </div>
 
           {error && (
-            <p
-              className="text-caption"
-              style={{ color: "var(--color-error)" }}
-            >
-              {error}
-            </p>
+            <p className="text-red-400 text-sm">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-primary"
-            style={{ width: "100%", marginTop: "0.5rem", opacity: isLoading ? 0.6 : 1 }}
+            className="w-full mt-2 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-2.5 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:shadow-[0_0_24px_rgba(99,102,241,0.4)] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
-                <span className="spinner-apple" />
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                 {t("auth.reset.submitting")}
               </span>
             ) : (
