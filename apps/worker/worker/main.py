@@ -209,12 +209,24 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             .eq("project_id", project_id)
             .execute()
         )
-        data_sources = data_sources_result.data or []
+        raw_data = data_sources_result.data or []
+        logger.info(
+            f"[DIAG] raw_data type={type(raw_data).__name__} len={len(raw_data)}"
+        )
+        if raw_data:
+            logger.info(
+                f"[DIAG] raw_data[0] type={type(raw_data[0]).__name__} "
+                f"repr={repr(raw_data[0])[:300]}"
+            )
+        if raw_data and isinstance(raw_data[0], list):
+            logger.warning("[DIAG] nested list detected, flattening")
+            raw_data = [item for sublist in raw_data for item in sublist if isinstance(item, dict)]
+        data_sources = [s for s in raw_data if isinstance(s, dict)]
 
         # 4. Use pre-extracted content from each source
         all_texts = []
         diag = []
-        logger.info(f"[DIAG] WORKER_IMAGE=f13c7b4 data_sources count={len(data_sources)}")
+        logger.info(f"[DIAG] data_sources count={len(data_sources)}")
         for idx, source in enumerate(data_sources):
             keys = list(source.keys())
             content = source.get("content", "") or ""
@@ -477,6 +489,12 @@ def handler(job: Dict[str, Any]) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+
+    try:
+        import supabase as _sb
+        logging.info(f"[BOOT] supabase=={_sb.__version__} BUILD_SHA={os.getenv('BUILD_SHA', 'unknown')}")
+    except Exception:
+        pass
 
     if RUNPOD_MODE:
         import runpod
