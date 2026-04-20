@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import type { Locale } from "@/i18n/translations";
 import { Header } from "@/components/lp/header";
 import { Footer } from "@/components/lp/footer";
-import { ContactForm } from "@/components/lp/contact-form";
 import { Mail } from "lucide-react";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -25,7 +24,7 @@ export default async function ContactPage() {
     <>
       <Header locale={locale} />
       <main className="min-h-screen bg-zinc-950 px-5 pt-24 pb-16 sm:px-6 sm:pt-28 sm:pb-24">
-        <div className="mx-auto max-w-2xl">
+        <div className="mx-auto max-w-xl text-center">
           {locale === "ja" ? (
             <>
               <h1 className="text-2xl font-bold text-white sm:text-3xl">
@@ -47,44 +46,56 @@ export default async function ContactPage() {
             </>
           )}
 
-          {/* Info card */}
-          <div className="mt-8">
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-              <Mail size={20} className="text-blue-400" />
-              <h3 className="mt-3 text-sm font-medium text-zinc-200">
-                {locale === "ja" ? "メール" : "Email"}
-              </h3>
-              <a
-                href="mailto:contact@ai-rakuraku.jp"
-                className="mt-1 block text-sm text-blue-400 underline underline-offset-2 cursor-pointer"
-              >
-                contact@ai-rakuraku.jp
-              </a>
+          <div className="mt-10 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 sm:p-8">
+            <div className="flex items-center justify-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-violet-500/10 ring-1 ring-white/[0.06]">
+                <Mail size={18} className="text-blue-400" />
+              </div>
+              <h2 className="text-base font-semibold text-white sm:text-lg">
+                {locale === "ja" ? "メールでお問い合わせ" : "Contact via Email"}
+              </h2>
+            </div>
+
+            <p className="mt-4 text-sm leading-relaxed text-zinc-400">
+              {locale === "ja"
+                ? "以下のメールアドレス宛に、お問い合わせ内容をお送りください。通常2〜3営業日以内にご返信いたします。"
+                : "Please send your inquiry to the email address below. We typically respond within 2-3 business days."}
+            </p>
+
+            <a
+              href="mailto:contact@ai-rakuraku.jp"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-6 py-3 text-sm font-medium text-white cursor-pointer transition-all duration-300 hover:brightness-110"
+            >
+              <Mail size={15} />
+              contact@ai-rakuraku.jp
+            </a>
+
+            <div className="mt-6 rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+              <p className="text-xs font-medium text-zinc-300">
+                {locale === "ja" ? "メールに含めていただきたい内容" : "Please include in your email"}
+              </p>
+              <ul className="mt-2 space-y-1 text-xs leading-relaxed text-zinc-500">
+                {locale === "ja" ? (
+                  <>
+                    <li>・お名前</li>
+                    <li>・お問い合わせの種類（質問 / 不具合報告 / その他）</li>
+                    <li>・具体的な内容</li>
+                  </>
+                ) : (
+                  <>
+                    <li>- Your name</li>
+                    <li>- Type of inquiry (question / bug report / other)</li>
+                    <li>- Details of your inquiry</li>
+                  </>
+                )}
+              </ul>
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="relative my-10">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/[0.06]" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-zinc-950 px-4 text-xs text-zinc-600">
-                {locale === "ja"
-                  ? "または以下のフォームから送信"
-                  : "Or send a message below"}
-              </span>
-            </div>
-          </div>
-
-          {/* Form */}
-          <ContactForm locale={locale} />
-
-          {/* Privacy notice */}
           <p className="mt-8 text-xs leading-relaxed text-zinc-600">
             {locale === "ja" ? (
               <>
-                ご入力いただいた個人情報は、お問い合わせへの対応にのみ使用いたします。詳細は
+                ご提供いただいた個人情報は、お問い合わせへの対応にのみ使用いたします。詳細は
                 <a
                   href="/privacy"
                   className="text-zinc-500 underline underline-offset-2"

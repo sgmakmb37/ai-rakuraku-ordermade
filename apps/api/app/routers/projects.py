@@ -90,8 +90,20 @@ async def delete_project(
     current_user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase),
 ) -> dict:
+    result = (
+        supabase.table("projects")
+        .select("id")
+        .eq("id", id)
+        .eq("user_id", current_user["id"])
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Project not found")
+
     try:
+        supabase.table("payments").delete().eq("project_id", id).execute()
         supabase.table("projects").delete().eq("id", id).eq("user_id", current_user["id"]).execute()
         return {"deleted": True}
     except Exception:
-        raise HTTPException(status_code=404, detail="Project not found")
+        logger.exception("Failed to delete project %s", id)
+        raise HTTPException(status_code=500, detail="Failed to delete project")
