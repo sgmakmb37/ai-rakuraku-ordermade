@@ -29,6 +29,9 @@ ENV PATH="/opt/llama.cpp/build/bin:${PATH}"
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Verify critical imports succeed at build time
+RUN python -c "from supabase import create_client; import redis; import runpod; print('imports OK')"
+
 # Cache bust: per-commit SHA to force COPY layer invalidation
 ARG BUILD_SHA=unknown
 ENV BUILD_SHA=${BUILD_SHA}
