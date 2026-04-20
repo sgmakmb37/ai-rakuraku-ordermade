@@ -206,7 +206,8 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
         if not lora_path.exists():
             raise ValueError(f"LoRA adapter not found at {lora_output_dir}")
 
-        adapter_files = [f for f in lora_path.rglob("*") if f.is_file()]
+        UPLOAD_NAMES = {"adapter_config.json", "adapter_model.safetensors", "adapter_model.bin"}
+        adapter_files = [f for f in lora_path.iterdir() if f.is_file() and f.name in UPLOAD_NAMES]
         if not adapter_files:
             raise ValueError(f"No adapter files found in {lora_output_dir}")
 

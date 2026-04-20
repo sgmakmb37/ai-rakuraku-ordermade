@@ -373,11 +373,11 @@ def train_lora(
     else:
         # Model-family-specific LoRA config
         if is_gemma:
-            # Google Gemma 4 official QLoRA: all-linear, r=16, dropout=0.05
-            # modules_to_save omitted to keep adapter <50MB (embed is ~1GB for 256k vocab)
+            # Gemma 4 uses Gemma4ClippableLinear; only "all-linear" works with PEFT.
+            # r=4 keeps adapter under 50MB (Supabase free tier limit). r=16 → 101MB.
             lora_config = LoraConfig(
-                r=16,
-                lora_alpha=16,
+                r=4,
+                lora_alpha=8,
                 lora_dropout=0.05,
                 target_modules="all-linear",
                 bias="none",
@@ -422,9 +422,7 @@ def train_lora(
         packing=False,
         dataset_text_field="text",
         report_to=[],
-        # Enhanced token configuration for better training stability
         remove_unused_columns=True,
-        include_tokens_per_second=True,
     )
     # Validate tokenizer configuration before training
     _validate_tokenizer_config(tokenizer, model_id)
