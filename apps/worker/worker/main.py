@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict
 
-import redis
 from supabase import create_client
 
 from worker.config import config
@@ -19,12 +18,8 @@ from worker.pipeline import (
 
 logger = logging.getLogger(__name__)
 
-RUNPOD_MODE = os.getenv("RUNPOD_MODE", "0") == "1"
-
-# GGUF chunking: 48MB chunks (safety margin under Supabase 50MB file limit)
 GGUF_CHUNK_SIZE = 48 * 1024 * 1024
 
-# Model ID mapping
 MODEL_ID_MAP = {
     "qwen2.5-1.5b": "Qwen/Qwen2.5-1.5B",
     "qwen2.5-3b": "Qwen/Qwen2.5-3B",
@@ -34,22 +29,7 @@ MODEL_ID_MAP = {
 
 
 def _shard_and_upload_gguf(supabase, gguf_path: Path, storage_dir: str) -> str:
-    """
-    Split a GGUF file into <50MB chunks and upload to Supabase Storage.
-
-    Writes chunks to `{storage_dir}/gguf/part_{000..N}.bin` and a manifest
-    `{storage_dir}/gguf/manifest.json` describing the assembly order.
-
-    Args:
-        supabase: Supabase client
-        gguf_path: Local path to the GGUF file
-        storage_dir: Base prefix in the `models` bucket
-
-    Returns:
-        Storage path of the uploaded manifest.json
-    """
     import hashlib
-    import json as _json
 
     if not gguf_path.exists():
         raise FileNotFoundError(f"GGUF file not found: {gguf_path}")
@@ -71,7 +51,6 @@ def _shard_and_upload_gguf(supabase, gguf_path: Path, storage_dir: str) -> str:
             try:
                 supabase.storage.from_("models").upload(chunk_storage_path, data)
             except Exception:
-                # Idempotent retry: remove + re-upload
                 try:
                     supabase.storage.from_("models").remove([chunk_storage_path])
                 except Exception:
@@ -92,7 +71,7 @@ def _shard_and_upload_gguf(supabase, gguf_path: Path, storage_dir: str) -> str:
         "chunks": chunks,
         "sha256": sha256.hexdigest(),
     }
-    manifest_bytes = _json.dumps(manifest, indent=2).encode("utf-8")
+    manifest_bytes = json.dumps(manifest, indent=2).encode("utf-8")
     manifest_storage_path = f"{gguf_prefix}/manifest.json"
     try:
         supabase.storage.from_("models").upload(manifest_storage_path, manifest_bytes)
@@ -106,75 +85,13 @@ def _shard_and_upload_gguf(supabase, gguf_path: Path, storage_dir: str) -> str:
     return manifest_storage_path
 
 
-class WorkerQueue:
-    def __init__(self, redis_url: str = None):
-        self.redis_url = redis_url or config.REDIS_URL
-        self.client = redis.from_url(self.redis_url, decode_responses=True)
-        self.queue_name = config.REDIS_QUEUE_NAME
-
-    def get_job(self) -> Dict[str, Any] | None:
-        """
-        Get next job from queue.
-
-        Returns:
-            Job dict or None if queue is empty
-        """
-        result = self.client.blpop(self.queue_name, timeout=5)
-        if result is None:
-            return None
-        _, job_json = result
-        return json.loads(job_json)
-
-    def mark_job_complete(self, job_id: str, result: Dict[str, Any]) -> None:
-        """
-        Mark job as complete and store result.
-
-        Args:
-            job_id: Job ID
-            result: Result data
-        """
-        supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
-        supabase.table("training_jobs").update(
-            {
-                "status": "done",
-                "finished_at": datetime.utcnow().isoformat(),
-            }
-        ).eq("id", job_id).execute()
-
-    def mark_job_failed(self, job_id: str, error: str) -> None:
-        """
-        Mark job as failed with error message.
-
-        Args:
-            job_id: Job ID
-            error: Error message
-        """
-        supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
-        supabase.table("training_jobs").update(
-            {
-                "status": "failed",
-                "error_message": error,
-                "finished_at": datetime.utcnow().isoformat(),
-            }
-        ).eq("id", job_id).execute()
-
-
 def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Process a single job.
-
-    Args:
-        job: Job data
-
-    Returns:
-        Result data
-    """
     supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
     job_id = job["id"]
     project_id = job["project_id"]
 
     try:
-        # 1. Get training job and update to running
+        # 1. Update status to running
         training_job_result = (
             supabase.table("training_jobs")
             .select("*")
@@ -191,7 +108,7 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             }
         ).eq("id", job_id).execute()
 
-        # 2. Get project to find model_type
+        # 2. Get project
         project_result = (
             supabase.table("projects").select("*").eq("id", project_id).execute()
         )
@@ -210,57 +127,37 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             .execute()
         )
         raw_data = data_sources_result.data or []
-        logger.info(
-            f"[DIAG] raw_data type={type(raw_data).__name__} len={len(raw_data)}"
-        )
-        if raw_data:
-            logger.info(
-                f"[DIAG] raw_data[0] type={type(raw_data[0]).__name__} "
-                f"repr={repr(raw_data[0])[:300]}"
-            )
         if raw_data and isinstance(raw_data[0], list):
-            logger.warning("[DIAG] nested list detected, flattening")
             raw_data = [item for sublist in raw_data for item in sublist if isinstance(item, dict)]
         data_sources = [s for s in raw_data if isinstance(s, dict)]
 
-        # 4. Use pre-extracted content from each source
+        # 4. Extract text
         all_texts = []
-        diag = []
-        logger.info(f"[DIAG] data_sources count={len(data_sources)}")
-        for idx, source in enumerate(data_sources):
-            keys = list(source.keys())
+        for source in data_sources:
             content = source.get("content", "") or ""
-            content_len = len(content)
-            diag.append(f"src{idx}: keys={keys} content_len={content_len}")
-            logger.info(f"[DIAG] src{idx}: keys={keys} content_len={content_len}")
             if content.strip():
                 all_texts.append(content)
                 continue
             source_type = source.get("type") or source.get("source_type") or "url"
             source_value = source.get("source_value") or source.get("name") or ""
             if source_value:
-                logger.info(f"Re-extracting text from {source_type}: {source_value}")
                 text = extract_text(source_type, source_value)
                 if text:
                     all_texts.append(text)
 
         combined_text = "\n\n".join(all_texts)
-        logger.info(f"[DIAG] combined_text_len={len(combined_text)}")
         if not combined_text.strip():
-            raise ValueError(f"No text extracted from sources | diag={diag}")
+            raise ValueError("No text extracted from sources")
 
-        # 5. Chunk text
+        # 5. Chunk and filter
         chunks = chunk_text(combined_text)
-
-        # 6. Filter chunks
         filtered_chunks = filter_chunks(chunks)
         if not filtered_chunks:
             raise ValueError("No valid chunks after filtering")
 
-        # 7. Get existing LoRA artifact if available, and download its files
-        # to local path so PeftModel.from_pretrained can load them for resume.
+        # 6. Check for existing LoRA to resume from
         existing_lora_path = None
-        storage_path = ""  # Initialize storage_path before conditional block
+        storage_path = ""
         lora_artifacts_result = (
             supabase.table("lora_artifacts")
             .select("*")
@@ -272,7 +169,6 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
         if lora_artifacts_result.data:
             latest = lora_artifacts_result.data[0]
             storage_path = latest.get("storage_path", "")
-            # parent dir = "projects/{pid}/{old_jid}"
             parent_prefix = "/".join(storage_path.split("/")[:-1]) if "/" in storage_path else ""
             if parent_prefix:
                 try:
@@ -287,23 +183,16 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
                         try:
                             blob = supabase.storage.from_("models").download(remote_path)
                             (resume_dir / fname).write_bytes(blob)
-                            logger.info(f"[RESUME] downloaded {remote_path} ({len(blob)} bytes)")
                         except Exception as dl_err:
                             logger.warning(f"[RESUME] skip {remote_path}: {dl_err}")
-                    # Require at least adapter_config.json for a valid resume
                     if (resume_dir / "adapter_config.json").exists():
                         existing_lora_path = str(resume_dir)
                         logger.info(f"[RESUME] will continue from {existing_lora_path}")
-                    else:
-                        logger.warning(
-                            f"[RESUME] adapter_config.json missing in {resume_dir}, training fresh"
-                        )
                 except Exception:
                     logger.exception("[RESUME] failed to prepare resume dir, training fresh")
 
-        # 8. Train LoRA
+        # 7. Train LoRA
         lora_output_dir = str(Path(config.MODEL_CACHE_DIR) / f"lora_{job_id}")
-        logger.info(f"Training LoRA for job {job_id}")
         train_lora(
             model_id=model_id,
             train_texts=filtered_chunks,
@@ -312,8 +201,7 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             max_steps=60,
         )
 
-        # 9. Upload LoRA adapter files directly (skip GGUF quantize for E2E).
-        # LoRA adapter files are small (~10-50MB) and usable with base model.
+        # 8. Upload adapter files
         lora_path = Path(lora_output_dir)
         if not lora_path.exists():
             raise ValueError(f"LoRA adapter not found at {lora_output_dir}")
@@ -322,7 +210,6 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
         if not adapter_files:
             raise ValueError(f"No adapter files found in {lora_output_dir}")
 
-        # Primary file = adapter_model.safetensors or .bin
         primary_candidates = [
             f for f in adapter_files
             if f.name in ("adapter_model.safetensors", "adapter_model.bin")
@@ -340,25 +227,15 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
                 file_bytes = f.read()
             file_storage_path = f"{storage_dir}/{rel.as_posix()}"
             try:
-                supabase.storage.from_("models").upload(
-                    file_storage_path, file_bytes
-                )
-                logger.info(f"Uploaded {file_storage_path} ({len(file_bytes)} bytes)")
-            except Exception as upload_err:
-                logger.warning(f"Upload failed for {file_storage_path}: {upload_err}")
-                # Retry by removing first — supabase upload fails on existing
+                supabase.storage.from_("models").upload(file_storage_path, file_bytes)
+            except Exception:
                 try:
                     supabase.storage.from_("models").remove([file_storage_path])
-                    supabase.storage.from_("models").upload(
-                        file_storage_path, file_bytes
-                    )
-                    logger.info(f"Re-uploaded {file_storage_path}")
+                    supabase.storage.from_("models").upload(file_storage_path, file_bytes)
                 except Exception as retry_err:
-                    raise ValueError(
-                        f"Upload to {file_storage_path} failed: {retry_err}"
-                    ) from retry_err
+                    raise ValueError(f"Upload to {file_storage_path} failed: {retry_err}")
 
-        # 11. Optional GGUF quantize + shard upload (feature flagged)
+        # 9. Optional GGUF export
         gguf_manifest_path = None
         if os.getenv("ENABLE_GGUF_EXPORT", "0") == "1":
             try:
@@ -372,11 +249,10 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
                 gguf_manifest_path = _shard_and_upload_gguf(
                     supabase, Path(gguf_file), storage_dir
                 )
-                logger.info(f"[GGUF] manifest uploaded: {gguf_manifest_path}")
             except Exception:
                 logger.exception("[GGUF] export failed, continuing with adapter only")
 
-        # 12. Record LoRA artifact (schema: project_id, version, storage_path [, gguf_manifest_path])
+        # 10. Record artifact
         current_version = 1
         if lora_artifacts_result.data:
             current_version = lora_artifacts_result.data[0].get("version", 0) + 1
@@ -391,7 +267,7 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             artifact_record["gguf_manifest_path"] = gguf_manifest_path
         supabase.table("lora_artifacts").insert(artifact_record).execute()
 
-        # 12. Update project status
+        # 11. Update project status
         expiry_date = (datetime.utcnow() + timedelta(days=30)).isoformat()
         supabase.table("projects").update(
             {
@@ -401,7 +277,11 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             }
         ).eq("id", project_id).execute()
 
-        result = {
+        supabase.table("training_jobs").update(
+            {"status": "done", "finished_at": datetime.utcnow().isoformat()}
+        ).eq("id", job_id).execute()
+
+        return {
             "job_id": job_id,
             "project_id": project_id,
             "status": "success",
@@ -409,96 +289,11 @@ def process_job(job: Dict[str, Any]) -> Dict[str, Any]:
             "version": current_version,
         }
 
-        logger.info(f"Job {job_id} completed successfully")
-        return result
-
     except Exception as e:
         logger.error(f"Job {job_id} failed: {str(e)}", exc_info=True)
+        supabase.table("training_jobs").update(
+            {"status": "failed", "error_message": str(e), "finished_at": datetime.utcnow().isoformat()}
+        ).eq("id", job_id).execute()
+        # Only mark project failed if it's still in "training" state (avoid overwriting "completed")
+        supabase.table("projects").update({"status": "failed"}).eq("id", project_id).eq("status", "training").execute()
         raise
-
-
-def run_worker_loop(max_jobs: int = None) -> None:
-    """
-    Main worker loop that continuously processes jobs from queue.
-
-    Args:
-        max_jobs: Maximum jobs to process before exiting (None for infinite)
-    """
-    queue = WorkerQueue()
-    job_count = 0
-
-    try:
-        while True:
-            if max_jobs is not None and job_count >= max_jobs:
-                logger.info(f"Reached max_jobs limit ({max_jobs}), exiting")
-                break
-
-            job = queue.get_job()
-            if job is None:
-                logger.debug("No job in queue, waiting...")
-                continue
-
-            job_id = job.get("id")
-            logger.info(f"Processing job {job_id}")
-
-            try:
-                result = process_job(job)
-                queue.mark_job_complete(job_id, result)
-                logger.info(f"Job {job_id} marked as complete")
-            except Exception as e:
-                error_message = str(e)
-                logger.error(f"Job {job_id} failed with error: {error_message}")
-                queue.mark_job_failed(job_id, error_message)
-
-            job_count += 1
-
-    except KeyboardInterrupt:
-        logger.info("Worker interrupted by user, shutting down gracefully")
-    except Exception as e:
-        logger.error(f"Worker loop failed: {str(e)}", exc_info=True)
-        raise
-
-
-def handler(job: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    RunPod Serverless handler.
-
-    Args:
-        job: RunPod job dict with "input" key containing job data
-
-    Returns:
-        Result data
-    """
-    job_input = job["input"]
-    job_id = job_input.get("job_id") or job_input.get("id")
-    project_id = job_input["project_id"]
-
-    queue = WorkerQueue()
-    process_input = {"id": job_id, "project_id": project_id}
-
-    try:
-        result = process_job(process_input)
-        queue.mark_job_complete(job_id, result)
-        return result
-    except Exception as e:
-        error_message = str(e)
-        logger.error(f"RunPod job {job_id} failed: {error_message}", exc_info=True)
-        queue.mark_job_failed(job_id, error_message)
-        return {"error": error_message}
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-
-    try:
-        import supabase as _sb
-        logging.info(f"[BOOT] supabase=={_sb.__version__} BUILD_SHA={os.getenv('BUILD_SHA', 'unknown')}")
-    except Exception:
-        pass
-
-    if RUNPOD_MODE:
-        import runpod
-
-        runpod.serverless.start({"handler": handler})
-    else:
-        run_worker_loop()

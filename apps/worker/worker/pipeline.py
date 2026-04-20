@@ -101,11 +101,7 @@ def _setup_tokenizer_special_tokens(tokenizer, model_id: str, is_gemma: bool) ->
 
             # For some models, we might need to add a dedicated pad token
             if is_qwen and hasattr(tokenizer, 'add_special_tokens'):
-                # Some Qwen models work better with dedicated pad tokens
-                vocab = tokenizer.get_vocab()
-                if "<pad>" not in vocab and "<|pad|>" not in vocab:
-                    # Use EOS as pad is fine for most cases
-                    pass
+                pass
 
         # Verify configuration
         if not tokenizer.eos_token:
@@ -352,13 +348,11 @@ def train_lora(
     _setup_tokenizer_special_tokens(tokenizer, model_id, is_gemma)
 
     import sys
-    import transformers as _tf
-    import trl as _trl
-    import peft as _peft
+    import transformers, trl, peft
     print(
         f"[VERSIONS] python={sys.version.split()[0]} "
-        f"transformers={_tf.__version__} trl={_trl.__version__} "
-        f"peft={_peft.__version__} model={model_id} eos='{tokenizer.eos_token}'",
+        f"transformers={transformers.__version__} trl={trl.__version__} "
+        f"peft={peft.__version__} model={model_id} eos='{tokenizer.eos_token}'",
         flush=True,
     )
 
@@ -448,9 +442,7 @@ def train_lora(
     os.makedirs(output_dir, exist_ok=True)
     model.save_pretrained(output_dir, safe_serialization=True)
 
-    # Log actual file sizes for diagnostics
-    from pathlib import Path as _P
-    for f in _P(output_dir).rglob("*"):
+    for f in Path(output_dir).rglob("*"):
         if f.is_file():
             print(f"[SAVED] {f.name}: {f.stat().st_size} bytes", flush=True)
 
@@ -484,7 +476,6 @@ def quantize_model(
     Returns:
         Path to the final quantized .gguf file
     """
-    import shutil
     import subprocess
     import tempfile
 
@@ -548,8 +539,6 @@ def quantize_model(
             check=True,
         )
 
-        # shutil cleanup is automatic via TemporaryDirectory
-        _ = shutil  # keep import reachable
 
     size = final_path.stat().st_size
     print(f"[GGUF] done: {final_path} ({size} bytes)", flush=True)

@@ -1,15 +1,13 @@
-import json
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 
 import httpx
-import redis
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 
 from app.config import settings
-from app.deps import get_supabase, get_current_user, get_redis
+from app.deps import get_supabase, get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +17,6 @@ router = APIRouter(prefix="/projects/{project_id}", tags=["training"])
 def _get_user_project(
     supabase: Client, project_id: str, user_id: str, columns: str = "*",
 ) -> dict:
-    """user_idをクエリ条件に含めてプロジェクトを取得する。存在しなければ404。"""
     try:
         result = (
             supabase.table("projects")
@@ -32,6 +29,29 @@ def _get_user_project(
         return result.data
     except Exception:
         raise HTTPException(status_code=404, detail="Project not found")
+
+
+async def _submit_training_job(
+    job_id: str, project_id: str, supabase: Client
+) -> None:
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                settings.modal_webhook_url,
+                headers={"x-webhook-secret": settings.modal_webhook_secret},
+                json={"job_id": job_id, "project_id": project_id},
+                timeout=30.0,
+            )
+            resp.raise_for_status()
+    except Exception:
+        logger.exception("Failed to submit training job %s", job_id)
+        supabase.table("training_jobs").update(
+            {"status": "failed", "error_message": "Training service error"}
+        ).eq("id", job_id).execute()
+        supabase.table("projects").update(
+            {"status": "created"}
+        ).eq("id", project_id).execute()
+        raise HTTPException(status_code=502, detail="Training service error")
 
 
 @router.post("/train")
@@ -54,7 +74,6 @@ async def start_training(
 
     supabase.table("projects").update({"status": "training"}).eq("id", project_id).execute()
 
-
     job_id = str(uuid.uuid4())
     supabase.table("training_jobs").insert({
         "id": job_id,
@@ -63,46 +82,7 @@ async def start_training(
         "created_at": datetime.now(timezone.utc).isoformat(),
     }).execute()
 
-    # ジョブ投入: RunPod Serverless or Redis
-    if settings.runpod_endpoint_id and settings.runpod_api_key:
-        # RunPod Serverless API経由
-        try:
-            async with httpx.AsyncClient() as client:
-                resp = await client.post(
-                    f"https://api.runpod.ai/v2/{settings.runpod_endpoint_id}/run",
-                    headers={"Authorization": f"Bearer {settings.runpod_api_key}"},
-                    json={"input": {"job_id": job_id, "project_id": project_id}},
-                    timeout=30.0,
-                )
-                resp.raise_for_status()
-                runpod_job_id = resp.json().get("id")
-                # Poll status immediately to trigger job dispatch (RunPod known issue)
-                if runpod_job_id:
-                    await client.get(
-                        f"https://api.runpod.ai/v2/{settings.runpod_endpoint_id}/status/{runpod_job_id}",
-                        headers={"Authorization": f"Bearer {settings.runpod_api_key}"},
-                        timeout=10.0,
-                    )
-        except Exception:
-            logger.exception("Failed to submit RunPod job %s", job_id)
-            supabase.table("training_jobs").update(
-                {"status": "failed", "error_message": "RunPod API error"}
-            ).eq("id", job_id).execute()
-            supabase.table("projects").update({"status": "created"}).eq("id", project_id).execute()
-            raise HTTPException(status_code=502, detail="RunPod API error")
-    else:
-        # Redisキューにジョブ投入
-        try:
-            redis_client = get_redis()
-            queue_data = json.dumps({"job_id": job_id, "project_id": project_id})
-            redis_client.rpush(settings.redis_queue_name, queue_data)
-        except redis.RedisError:
-            logger.exception("Failed to enqueue training job %s", job_id)
-            supabase.table("training_jobs").update(
-                {"status": "failed", "error_message": "Queue error"}
-            ).eq("id", job_id).execute()
-            supabase.table("projects").update({"status": "created"}).eq("id", project_id).execute()
-            raise HTTPException(status_code=502, detail="Queue service error")
+    await _submit_training_job(job_id, project_id, supabase)
 
     return {"job_id": job_id, "status": "queued"}
 
@@ -115,10 +95,8 @@ async def reset_project(
 ):
     _get_user_project(supabase, project_id, user["id"])
 
-    # lora_artifacts削除
     supabase.table("lora_artifacts").delete().eq("project_id", project_id).execute()
 
-    # ステータスをcreatedに戻す
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(days=30)
     supabase.table("projects").update({
@@ -144,17 +122,6 @@ async def download_model(
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase),
 ):
-    """
-    Download a trained model.
-
-    Query params:
-        format: "adapter" (default) = LoRA adapter bundle
-                "gguf"             = quantized GGUF shards + manifest
-
-    Returns:
-        adapter mode: {download_url, files: [{name, url}], version}
-        gguf    mode: {manifest_url, chunks: [{name, url, index, size}], version, total_size}
-    """
     _get_user_project(supabase, project_id, user["id"])
 
     artifacts = (
@@ -172,8 +139,6 @@ async def download_model(
     storage_path = artifact["storage_path"]
     parent_prefix = "/".join(storage_path.split("/")[:-1]) if "/" in storage_path else ""
 
-    # GGUF mode: return manifest + chunk signed URLs.
-    # Check availability BEFORE updating activity so 404 doesn't extend expiry.
     if format == "gguf":
         gguf_manifest_path = artifact.get("gguf_manifest_path")
         if not gguf_manifest_path:
@@ -182,7 +147,6 @@ async def download_model(
                 detail="GGUF export not available for this artifact",
             )
 
-    # Update project activity (only reached when download is actually served)
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(days=30)
     supabase.table("projects").update({
@@ -191,10 +155,10 @@ async def download_model(
     }).eq("id", project_id).execute()
 
     if format == "gguf":
+        import json
         try:
             manifest_bytes = supabase.storage.from_("models").download(gguf_manifest_path)
-            import json as _json
-            manifest = _json.loads(manifest_bytes.decode("utf-8"))
+            manifest = json.loads(manifest_bytes.decode("utf-8"))
         except Exception:
             logger.exception("Failed to read GGUF manifest")
             raise HTTPException(status_code=500, detail="Manifest read error")
@@ -218,7 +182,6 @@ async def download_model(
             "version": artifact.get("version", 1),
         }
 
-    # Adapter mode (default): return bundle
     files = []
     if parent_prefix:
         try:
@@ -254,7 +217,6 @@ async def get_training_history(
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase),
 ):
-    """プロジェクトの学習履歴を取得する。"""
     _get_user_project(supabase, project_id, user["id"])
 
     jobs = (
