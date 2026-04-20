@@ -5,6 +5,7 @@ WORKDIR /app
 ENV RUNPOD_MODE=1
 ENV PYTHONUNBUFFERED=1
 ENV DEBIAN_FRONTEND=noninteractive
+ENV RUNPOD_INIT_TIMEOUT=800
 
 # Build tools + llama.cpp for optional GGUF quantization
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -29,8 +30,18 @@ ENV PATH="/opt/llama.cpp/build/bin:${PATH}"
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Verify critical imports succeed at build time
-RUN python -c "from supabase import create_client; import redis; import runpod; print('imports OK')"
+# Verify ALL critical imports succeed at build time
+RUN python -c "\
+from supabase import create_client; \
+import redis; \
+import runpod; \
+import torch; \
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig; \
+from trl import SFTConfig, SFTTrainer; \
+from peft import LoraConfig, get_peft_model; \
+from datasets import Dataset; \
+print(f'imports OK: torch={torch.__version__} CUDA={torch.cuda.is_available()}') \
+"
 
 # Cache bust: per-commit SHA to force COPY layer invalidation
 ARG BUILD_SHA=unknown

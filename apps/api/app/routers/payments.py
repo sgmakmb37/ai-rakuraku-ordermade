@@ -140,6 +140,14 @@ async def stripe_webhook(request: Request, supabase: Client = Depends(get_supaba
                         timeout=30.0,
                     )
                     resp.raise_for_status()
+                    runpod_job_id = resp.json().get("id")
+                    # Poll status immediately to trigger job dispatch (RunPod known issue)
+                    if runpod_job_id:
+                        client.get(
+                            f"https://api.runpod.ai/v2/{settings.runpod_endpoint_id}/status/{runpod_job_id}",
+                            headers={"Authorization": f"Bearer {settings.runpod_api_key}"},
+                            timeout=10.0,
+                        )
             except Exception:
                 logger.exception("Failed to submit RunPod job %s", job_id)
                 supabase.table("training_jobs").update(
