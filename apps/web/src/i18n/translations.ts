@@ -15,10 +15,10 @@ export const translations = {
     },
     hero: {
       badge: "AI初心者でも、すぐ使える",
-      titleLine1: "誰でもAIを",
-      titleLine2: "オーダーメイドできる",
+      titleLine1: "簡単にAIを",
+      titleLine2: "オーダーメイド",
       subtitleLine1: "専門知識なし、GPU不要、UI操作だけ。",
-      subtitleLine2: "あなた専用のAIモデルを作れるサービス。",
+      subtitleLine2: "専用のAIモデルを作れるサービス。",
       ctaPrimary: "始める",
       ctaSecondary: "使い方を見る",
       stat1: { value: "880", unit: "円〜", label: "1回あたり" },
@@ -27,7 +27,7 @@ export const translations = {
     },
     features: {
       label: "Features",
-      title: "なぜ選ばれるのか",
+      title: "このサービスの特徴",
       items: [
         {
           title: "専門知識ゼロでOK",
@@ -63,7 +63,7 @@ export const translations = {
         {
           title: "学習を開始",
           description:
-            "ボタンひとつで自動学習。標準90〜120分、高速なら35〜55分。",
+            "ボタンひとつで自動学習。クラウドGPUが処理するので、あなたのPCに負担なし。",
         },
         {
           title: "ダウンロード",
@@ -79,41 +79,29 @@ export const translations = {
       cta: "始める",
       plans: [
         {
-          name: "標準プラン",
+          name: "スタンダード",
           price: "880",
           currency: "¥",
           priceSuffix: "/ 回（税込）",
           secondaryPrice: "$6 USD",
-          description: "まずは試してみたい方に",
+          description: "あなた専用のAIを手軽に作れる",
           badge: null as string | null,
           features: [
             "全モデル選択可能",
             "URL・ファイル最大5件",
             "50万文字まで",
-            "標準GPU（90〜120分）",
-            "LoRAアダプタダウンロード",
-          ],
-          primary: false,
-        },
-        {
-          name: "高速プラン",
-          price: "1,430",
-          currency: "¥",
-          priceSuffix: "/ 回（税込）",
-          secondaryPrice: "$10 USD",
-          description: "スピードを重視する方に",
-          badge: "おすすめ" as string | null,
-          features: [
-            "全モデル選択可能",
-            "URL・ファイル最大5件",
-            "50万文字まで",
-            "高速GPU（35〜55分）",
-            "約3倍の処理速度",
+            "クラウドGPU処理",
             "LoRAアダプタダウンロード",
           ],
           primary: true,
         },
       ],
+    },
+    benefits: {
+      label: "Benefits",
+      title: "AIをファインチューニングするメリット",
+      subtitle: "ファインチューニングだけの合理的なメリット",
+      cta: "詳しく見てみる",
     },
     faq: {
       label: "FAQ",
@@ -132,7 +120,7 @@ export const translations = {
         {
           question: "学習にどれくらい時間がかかりますか？",
           answer:
-            "標準プランで90〜120分、高速オプションで35〜55分です。クラウドGPUが自動で処理します。",
+            "データ量やモデルによって異なりますが、クラウドGPUが自動で処理します。完了したらダッシュボードで確認できます。",
         },
         {
           question: "作成したAIモデルはどう使えますか？",
@@ -175,10 +163,10 @@ export const translations = {
     },
     hero: {
       badge: "Easy for AI beginners",
-      titleLine1: "Custom AI models",
-      titleLine2: "made for everyone",
+      titleLine1: "Easy custom AI",
+      titleLine2: "made to order",
       subtitleLine1: "No expertise needed. No GPU required. Just a simple UI.",
-      subtitleLine2: "Build your own custom AI model.",
+      subtitleLine2: "Build a custom AI model with ease.",
       ctaPrimary: "Start",
       ctaSecondary: "See how it works",
       stat1: { value: "$6", unit: "+", label: "per run" },
@@ -187,7 +175,7 @@ export const translations = {
     },
     features: {
       label: "Features",
-      title: "Why choose us",
+      title: "What makes this service unique",
       items: [
         {
           title: "Zero expertise needed",
@@ -223,7 +211,7 @@ export const translations = {
         {
           title: "Start training",
           description:
-            "One click to start. Standard: 90–120 min. Fast: 35–55 min.",
+            "One click to start. Cloud GPUs handle everything — no load on your machine.",
         },
         {
           title: "Download",
@@ -244,36 +232,24 @@ export const translations = {
           currency: "$",
           priceSuffix: "/ run",
           secondaryPrice: "¥880 JPY",
-          description: "For those who want to try it out",
+          description: "Create your custom AI easily",
           badge: null as string | null,
           features: [
             "All models available",
             "Up to 5 URLs/files",
             "Up to 500K characters",
-            "Standard GPU (90–120 min)",
-            "LoRA adapter download",
-          ],
-          primary: false,
-        },
-        {
-          name: "Fast",
-          price: "10",
-          currency: "$",
-          priceSuffix: "/ run",
-          secondaryPrice: "¥1,430 JPY",
-          description: "For those who value speed",
-          badge: "Recommended" as string | null,
-          features: [
-            "All models available",
-            "Up to 5 URLs/files",
-            "Up to 500K characters",
-            "Fast GPU (35–55 min)",
-            "~3x processing speed",
+            "Cloud GPU processing",
             "LoRA adapter download",
           ],
           primary: true,
         },
       ],
+    },
+    benefits: {
+      label: "Benefits",
+      title: "Benefits of AI fine-tuning",
+      subtitle: "Rational advantages unique to fine-tuning",
+      cta: "Learn more",
     },
     faq: {
       label: "FAQ",
@@ -292,7 +268,7 @@ export const translations = {
         {
           question: "How long does training take?",
           answer:
-            "90–120 minutes on Standard, 35–55 minutes with the Fast option. Cloud GPUs handle the processing automatically.",
+            "It varies depending on data size and model, but cloud GPUs handle everything automatically. You can check the status on your dashboard.",
         },
         {
           question: "How can I use my trained model?",

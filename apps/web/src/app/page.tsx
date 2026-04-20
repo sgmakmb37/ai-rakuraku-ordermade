@@ -3,6 +3,7 @@ import type { Locale } from "@/i18n/translations";
 import { Header } from "@/components/lp/header";
 import { Hero } from "@/components/lp/hero";
 import { Features } from "@/components/lp/features";
+import { Benefits } from "@/components/lp/benefits";
 import { HowItWorks } from "@/components/lp/how-it-works";
 import { Pricing } from "@/components/lp/pricing";
 import { FAQ } from "@/components/lp/faq";
@@ -19,6 +20,7 @@ export default async function Home() {
       <main>
         <Hero locale={locale} />
         <Features locale={locale} />
+        <Benefits locale={locale} />
         <HowItWorks locale={locale} />
         <Pricing locale={locale} />
         <FAQ locale={locale} />

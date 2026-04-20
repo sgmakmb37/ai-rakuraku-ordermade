@@ -26,7 +26,7 @@ export function Pricing({ locale }: { locale: Locale }) {
           </p>
         </FadeIn>
 
-        <div className="mx-auto mt-10 grid max-w-3xl gap-4 sm:mt-16 sm:gap-6 md:grid-cols-2">
+        <div className="mx-auto mt-10 flex max-w-sm justify-center sm:mt-16">
           {text.plans.map((plan, index) => (
             <FadeIn key={index} delay={0.1 + index * 0.15}>
               <div className="group relative h-full">
