@@ -193,7 +193,7 @@ function PrivacyJa() {
         7. ユーザーの権利
       </h2>
       <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-        ユーザーは、当方に対し、以下の請求を行うことができます。メール（contact@airakuraku.jp）にてお問い合わせください。合理的な期間内に対応いたします。
+        ユーザーは、当方に対し、以下の請求を行うことができます。メール（contact@ai-rakuraku.jp）にてお問い合わせください。合理的な期間内に対応いたします。
       </p>
       <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-zinc-400">
         <li>保有する個人情報の開示請求</li>
@@ -222,10 +222,10 @@ function PrivacyJa() {
       <p className="mt-2 text-sm text-zinc-400">
         メールアドレス：
         <a
-          href="mailto:contact@airakuraku.jp"
+          href="mailto:contact@ai-rakuraku.jp"
           className="text-blue-400 underline underline-offset-2"
         >
-          contact@airakuraku.jp
+          contact@ai-rakuraku.jp
         </a>
       </p>
 
@@ -417,7 +417,7 @@ function PrivacyEn() {
       </h2>
       <p className="mt-3 text-sm leading-relaxed text-zinc-400">
         You may make the following requests by contacting us at
-        contact@airakuraku.jp. We will respond within a reasonable timeframe.
+        contact@ai-rakuraku.jp. We will respond within a reasonable timeframe.
       </p>
       <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-zinc-400">
         <li>Disclosure of personal information held about you</li>
@@ -454,10 +454,10 @@ function PrivacyEn() {
       <p className="mt-3 text-sm leading-relaxed text-zinc-400">
         For inquiries regarding this Privacy Policy, please contact us at:{" "}
         <a
-          href="mailto:contact@airakuraku.jp"
+          href="mailto:contact@ai-rakuraku.jp"
           className="text-blue-400 underline underline-offset-2"
         >
-          contact@airakuraku.jp
+          contact@ai-rakuraku.jp
         </a>
       </p>
 

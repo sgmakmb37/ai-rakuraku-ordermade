@@ -25,15 +25,15 @@ export function Features({ locale }: { locale: Locale }) {
           </h2>
         </FadeIn>
 
-        <div className="mt-10 grid gap-4 sm:mt-16 sm:gap-6 md:grid-cols-3">
+        <div className="mt-10 grid auto-rows-fr gap-4 sm:mt-16 sm:gap-6 md:grid-cols-3">
           {text.items.map((item, index) => {
             const Icon = icons[index];
             return (
-              <FadeIn key={index} delay={0.1 + index * 0.15}>
-                <div className="group relative">
+              <FadeIn key={index} delay={0.1 + index * 0.15} className="h-full">
+                <div className="group relative h-full">
                   <div className="absolute -inset-1 rounded-2xl bg-gradient-to-b from-blue-600/0 to-violet-600/0 opacity-0 blur-2xl transition-all duration-500 group-hover:from-blue-600/[0.15] group-hover:to-violet-600/[0.08] group-hover:opacity-100" />
-                  <div className="relative rounded-2xl bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-px transition-all duration-500 group-hover:from-blue-500/40 group-hover:to-violet-500/20">
-                    <div className="rounded-[15px] bg-zinc-900 p-6 sm:p-8">
+                  <div className="relative h-full rounded-2xl bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-px transition-all duration-500 group-hover:from-blue-500/40 group-hover:to-violet-500/20">
+                    <div className="h-full rounded-[15px] bg-zinc-900 p-6 sm:p-8">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-violet-500/10 ring-1 ring-white/[0.06] transition-all duration-300 group-hover:from-blue-500/30 group-hover:to-violet-500/20 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.2)] sm:h-12 sm:w-12">
                         <Icon size={20} className="text-blue-400" />
                       </div>

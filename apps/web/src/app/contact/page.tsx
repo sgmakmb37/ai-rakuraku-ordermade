@@ -55,10 +55,10 @@ export default async function ContactPage() {
                 {locale === "ja" ? "メール" : "Email"}
               </h3>
               <a
-                href="mailto:contact@airakuraku.jp"
+                href="mailto:contact@ai-rakuraku.jp"
                 className="mt-1 block text-sm text-blue-400 underline underline-offset-2 cursor-pointer"
               >
-                contact@airakuraku.jp
+                contact@ai-rakuraku.jp
               </a>
             </div>
           </div>

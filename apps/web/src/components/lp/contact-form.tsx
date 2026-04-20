@@ -69,7 +69,7 @@ export function ContactForm({ locale }: { locale: Locale }) {
     const body = encodeURIComponent(
       `${locale === "ja" ? "名前" : "Name"}: ${name}\n${locale === "ja" ? "メール" : "Email"}: ${email}\n${locale === "ja" ? "カテゴリ" : "Category"}: ${category}\n\n${message}`
     );
-    window.location.href = `mailto:contact@airakuraku.jp?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:contact@ai-rakuraku.jp?subject=${subject}&body=${body}`;
     setSubmitted(true);
   };
 
@@ -84,10 +84,10 @@ export function ContactForm({ locale }: { locale: Locale }) {
         <div className="mt-6 text-sm text-zinc-500">
           {l.directEmail}:{" "}
           <a
-            href="mailto:contact@airakuraku.jp"
+            href="mailto:contact@ai-rakuraku.jp"
             className="text-blue-400 underline underline-offset-2 cursor-pointer"
           >
-            contact@airakuraku.jp
+            contact@ai-rakuraku.jp
           </a>
         </div>
       </div>

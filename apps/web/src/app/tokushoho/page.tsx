@@ -45,7 +45,7 @@ function TokushohoJa() {
             <Row label="販売責任者" value="やすい ともき" />
             <Row label="所在地" value="〒767-0014 香川県三豊市高瀬町上麻83-8" />
             <Row label="電話番号" value="070-8439-6289" />
-            <Row label="メールアドレス" value="contact@airakuraku.jp" />
+            <Row label="メールアドレス" value="contact@ai-rakuraku.jp" />
             <Row label="サービスURL" value="https://ai-rakuraku.jp" />
             <Row
               label="販売価格"
@@ -97,7 +97,7 @@ function TokushohoEn() {
               value="83-8 Kamiasa, Takase-cho, Mitoyo-shi, Kagawa 767-0014, Japan"
             />
             <Row label="Phone" value="+81-70-8439-6289" />
-            <Row label="Email" value="contact@airakuraku.jp" />
+            <Row label="Email" value="contact@ai-rakuraku.jp" />
             <Row label="Service URL" value="https://ai-rakuraku.jp" />
             <Row
               label="Pricing"
