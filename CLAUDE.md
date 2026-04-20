@@ -19,14 +19,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |---------|-------|---------|
 | `apps/web` | Next.js 16 (App Router) + TypeScript + Tailwind v4 | LP + ダッシュボード |
 | `apps/api` | FastAPI + Python 3.11+ | REST API、Stripe決済、ジョブ管理 |
-| `apps/worker` | Python 3.10+ + PyTorch + TRL 0.18.2 | GPU学習ワーカー（RunPod Serverless） |
+| `apps/worker` | Python 3.11 + PyTorch + Transformers 5.x + TRL | GPU学習ワーカー（Modal Serverless） |
 | `packages/shared` | TypeScript | 型定義・定数 |
 
 ### Key Flows
 
 **決済→学習フロー:**
 1. `/payments/checkout` → Stripe Checkout Session作成（880円、JPY zero-decimal）
-2. Stripe Webhook (`checkout.session.completed`) → 金額検証 → training_jobs作成 → RunPod/Redis投入
+2. Stripe Webhook (`checkout.session.completed`) → 金額検証 → training_jobs作成 → Modal Webhook投入
 3. `/train` エンドポイントは決済確認済みのプロジェクトのみ実行可
 
 **i18n 2系統:**
@@ -35,9 +35,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Infrastructure
 
-- Deploy: Vercel (web) / Render (api) / RunPod Serverless (worker)
+- Deploy: Vercel (web) / Render (api) / Modal Serverless (worker)
 - DB: Supabase (PostgreSQL + Auth + Storage)
-- Cache: Upstash Redis
 - Payment: Stripe (inline price_data, JPY zero-decimal)
 
 ---
@@ -64,7 +63,7 @@ pytest --cov=app --cov-report=term # with coverage
 ### Worker (apps/worker)
 ```bash
 cd apps/worker
-python -m worker.handler  # local test
+modal deploy modal_app.py  # deploy to Modal
 ```
 
 ---
@@ -85,5 +84,6 @@ python -m worker.handler  # local test
 
 - Next.js 16は破壊的変更あり。`apps/web/AGENTS.md`参照。コード書く前に`node_modules/next/dist/docs/`のガイドを読むこと
 - Stripe金額はJPY zero-decimal（880 = 880円）。cents換算しない
-- unslothは使わない。vanilla transformers + peft + trl==0.18.2（pinned）
+- unslothは使わない。vanilla transformers 5.x + peft + trl（バージョンピン不要）
+- Modal A100-40GB使用。LoRA rank: Gemma r=4 all-linear, Qwen r=8 attention-only
 - `apps/api/.env`は`.gitignore`に含まれている。秘密情報はRender環境変数で管理
