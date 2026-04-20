@@ -9,6 +9,7 @@ app = modal.App("ai-rakuraku-worker")
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .pip_install(
+        "fastapi[standard]",
         "torch>=2.6.0",
         "trl==0.18.2",
         "transformers>=4.53.0,<4.58.0",
@@ -50,7 +51,7 @@ def train(job_id: str, project_id: str) -> dict:
     image=image,
     secrets=[modal.Secret.from_name("ai-rakuraku")],
 )
-@modal.web_endpoint(method="POST")
+@modal.fastapi_endpoint(method="POST")
 def submit(payload: dict, x_webhook_secret: str = Header(default="")):
     expected = os.environ.get("WEBHOOK_SECRET", "")
     if not expected or x_webhook_secret != expected:
