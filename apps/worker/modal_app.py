@@ -31,7 +31,7 @@ vol = modal.Volume.from_name("ai-rakuraku-cache", create_if_missing=True)
 
 @app.function(
     image=image,
-    gpu="A10G",
+    gpu="a100-40gb",
     timeout=3600,
     volumes={"/cache": vol},
     secrets=[modal.Secret.from_name("ai-rakuraku")],
