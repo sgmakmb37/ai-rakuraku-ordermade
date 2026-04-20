@@ -92,6 +92,18 @@ export default function DashboardPage() {
     router.push(`/dashboard/${id}`);
   };
 
+  const handleDeleteProject = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    const confirmed = window.confirm(t("detail.deleteConfirm"));
+    if (!confirmed) return;
+    try {
+      await api.deleteProject(projectId);
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t("detail.errorDelete"));
+    }
+  };
+
   const canCreateNewProject = projects.length < 5;
 
   return (
@@ -209,10 +221,16 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                <div className="mt-4 pt-4 border-t border-white/[0.06] flex justify-between items-center">
                   <p className="text-xs text-zinc-500">
                     {t("dashboard.clickToView")}
                   </p>
+                  <button
+                    onClick={(e) => handleDeleteProject(e, project.id)}
+                    className="text-xs text-zinc-500 hover:text-red-400 transition-colors cursor-pointer"
+                  >
+                    {t("detail.deleteProject")}
+                  </button>
                 </div>
               </div>
             ))}

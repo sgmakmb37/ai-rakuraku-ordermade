@@ -26,21 +26,30 @@ function calcDaysLeft(expiresAt: string | undefined): number {
 }
 
 interface HistoryEntry {
-  version: string;
-  timestamp: string;
-  status: "success" | "in_progress" | "failed";
+  id: string;
+  status: string;
+  created_at: string;
 }
 
-const getHistoryStatusColor = (
-  status: "success" | "in_progress" | "failed"
-) => {
+const STATUS_PROGRESS: Record<string, number> = {
+  queued: 0,
+  running: 50,
+  done: 100,
+  failed: 0,
+};
+
+const getHistoryStatusColor = (status: string) => {
   switch (status) {
-    case "success":
+    case "done":
       return "bg-emerald-500/10 text-emerald-400";
-    case "in_progress":
+    case "running":
       return "bg-blue-500/10 text-blue-400";
+    case "queued":
+      return "bg-yellow-500/10 text-yellow-400";
     case "failed":
       return "bg-red-500/10 text-red-400";
+    default:
+      return "bg-zinc-500/10 text-zinc-400";
   }
 };
 
@@ -54,6 +63,8 @@ export default function ProjectDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [isCheckingProgress, setIsCheckingProgress] = useState(false);
+  const [progressPercent, setProgressPercent] = useState<number | null>(null);
   const { t, locale, setLocale } = useLocale();
 
   useEffect(() => {
@@ -144,6 +155,48 @@ export default function ProjectDetailPage() {
       }
     } catch (err) {
       alert(err instanceof Error ? err.message : t("detail.errorDownload"));
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleCheckProgress = async () => {
+    try {
+      setIsCheckingProgress(true);
+      const historyData = await api.getTrainingHistory(projectId);
+      const jobs = historyData.jobs || [];
+      setHistory(
+        jobs.map((j: { id: string; status: string; created_at: string }) => ({
+          id: j.id,
+          status: j.status,
+          created_at: j.created_at,
+        }))
+      );
+      const latest = jobs[0];
+      if (latest) {
+        setProgressPercent(STATUS_PROGRESS[latest.status] ?? 0);
+        const data = await api.getProject(projectId);
+        setProject((prev) =>
+          prev ? { ...prev, status: data.status } : prev
+        );
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsCheckingProgress(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(t("detail.deleteConfirm"));
+    if (!confirmed) return;
+    try {
+      setIsActionLoading(true);
+      await api.deleteProject(projectId);
+      alert(t("detail.deleteSuccess"));
+      router.push("/dashboard");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t("detail.errorDelete"));
     } finally {
       setIsActionLoading(false);
     }
@@ -248,7 +301,7 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <button
             onClick={handleAddLearning}
             disabled={isActionLoading}
@@ -270,6 +323,40 @@ export default function ProjectDetailPage() {
           >
             {isActionLoading ? t("detail.processing") : t("detail.download")}
           </button>
+          <button
+            onClick={handleDelete}
+            disabled={isActionLoading}
+            className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm font-medium text-red-400 cursor-pointer hover:bg-red-500/10 hover:border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isActionLoading ? t("detail.processing") : t("detail.deleteProject")}
+          </button>
+        </div>
+
+        {/* Progress Check */}
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={handleCheckProgress}
+            disabled={isCheckingProgress}
+            className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-5 py-2 text-sm font-medium text-zinc-300 cursor-pointer transition-all duration-300 hover:border-white/[0.2] hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isCheckingProgress && (
+              <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            )}
+            {t("detail.checkProgress")}
+          </button>
+          {progressPercent !== null && (
+            <div className="flex items-center gap-3 flex-1 max-w-xs">
+              <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-blue-500 to-violet-500 transition-all duration-500"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <span className="text-sm font-medium text-zinc-300 whitespace-nowrap">
+                {progressPercent}%
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Learning History */}
@@ -293,14 +380,16 @@ export default function ProjectDetailPage() {
               <tbody>
                 {history.map((entry, idx) => (
                   <tr
-                    key={idx}
+                    key={entry.id || idx}
                     className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors"
                   >
                     <td className="py-4 px-4 text-sm text-white font-medium">
-                      {entry.version}
+                      v{history.length - idx}
                     </td>
                     <td className="py-4 px-4 text-sm text-zinc-400">
-                      {new Date(entry.timestamp).toLocaleString(locale === "ja" ? "ja-JP" : "en-US")}
+                      {entry.created_at
+                        ? new Date(entry.created_at).toLocaleString(locale === "ja" ? "ja-JP" : "en-US")
+                        : "-"}
                     </td>
                     <td className="py-4 px-4">
                       <span
